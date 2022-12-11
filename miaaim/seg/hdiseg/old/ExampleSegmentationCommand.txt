@@ -1,0 +1,2 @@
+python CommandWatershedSegmentation.py --input /PHShome/jq590/TripletSegmentation/data/25546ON_Probabilities_noise_RemoveNoise.tif /PHShome/jq590/TripletSegmentation/data/25546POST_Probabilities_noise_RemoveNoise.tif --output /PHShome/jq590/TripletSegmentation/masks --nuc_channel 0 --sigma 2 --correction 1.3 --area_threshold 64 --min_size 30 --footprint 5
+

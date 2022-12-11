@@ -1,0 +1,19 @@
+name: miaaim-dev
+channels:
+   - conda-forge
+   - bioconda
+dependencies:
+   - python=3.10
+   - numpy
+   - numba
+   - matplotlib
+   - pandas
+   - scipy
+   - scikit-learn
+   - pyimzml
+   - pathlib
+   - uncertainties
+   - pyyaml
+   - umap-learn
+   - dask
+   - ipykernel

@@ -1,0 +1,1 @@
+python CommandNoiseRemoval.py --input D:\Josh_Hess\Triplets-Melanoma-Ilastik\25546ON_Probabilities_noise.tif D:\Josh_Hess\Triplets-Melanoma-Ilastik\25546POST_Probabilities_noise.tif --output D:\Josh_Hess\Triplets-Melanoma-Ilastik --sigma 2 --correction 1.2
