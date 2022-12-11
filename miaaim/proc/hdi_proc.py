@@ -459,6 +459,7 @@ class IntraModalityDataset:
                                         'export_diagnostics':export_diagnostics,
                                         'output_dir':str(output_dir),
                                         'n_jobs':n_jobs,
+                                        'channels':channels,
                                         **kwargs}})
 
         # validate reload commands
@@ -523,7 +524,7 @@ class IntraModalityDataset:
                 a, b, VT = extmath.randomized_svd(base.graph_,n_components=100,random_state=0)
 
                 # Calculate spectral clustering
-                kmeans = MiniBatchKMeans(self.landmarks,init_size=3 * self.landmarks,batch_size=10000,random_state=0,n_jobs=1)
+                kmeans = MiniBatchKMeans(self.landmarks,init_size=3 * self.landmarks,batch_size=10000,random_state=0)
                 #Get kmeans labels using the singular value decomposition and minibatch k means
                 kmean_lab = kmeans.fit_predict(base.graph_.dot(VT.T))
                 # Get  mean values from clustering to define spectral centroids
@@ -714,7 +715,15 @@ class IntraModalityDataset:
         self.umap_optimal_dim = opt_dim
 
     def RunOptimalParametricUMAP(
-        self, import_args={'subsample':True,'method':'default'}, dim_range=(1,11), landmarks=3000, export_diagnostics=False, output_dir=None, n_jobs=1, **kwargs
+        self, 
+        import_args={'subsample':True,'method':'default'}, 
+        dim_range=(1,11), 
+        landmarks=3000, 
+        export_diagnostics=False,
+        output_dir=None, 
+        n_jobs=1,
+        channels=None,
+        **kwargs
     ):
         """Run parametric UMAP over a range of dimensions to choose steady state embedding
         by fitting an exponential regression model to the fuzzy set cross entropy
@@ -758,6 +767,7 @@ class IntraModalityDataset:
                                         'export_diagnostics':export_diagnostics,
                                         'output_dir':str(output_dir),
                                         'n_jobs':n_jobs,
+                                        'channels':channels,
                                         **kwargs}})
 
         # validate reload commands
@@ -820,7 +830,7 @@ class IntraModalityDataset:
                 a, b, VT = extmath.randomized_svd(base.graph_,n_components=100,random_state=0)
 
                 # Calculate spectral clustering
-                kmeans = MiniBatchKMeans(self.landmarks,init_size=3 * self.landmarks,batch_size=10000,random_state=0,n_jobs=1)
+                kmeans = MiniBatchKMeans(self.landmarks,init_size=3 * self.landmarks,batch_size=10000,random_state=0)
                 #Get kmeans labels using the singular value decomposition and minibatch k means
                 kmean_lab = kmeans.fit_predict(base.graph_.dot(VT.T))
                 # Get  mean values from clustering to define spectral centroids

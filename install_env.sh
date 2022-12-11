@@ -12,6 +12,7 @@ conda install -c bioconda pyimzml
 conda install -c conda-forge pathlib
 conda install -c conda-forge uncertainties
 conda install -c conda-forge pyyaml
+conda install -c conda-forge tensorflow
 conda install -c conda-forge umap-learn
 conda install -c conda-forge imagecodecs
 # conda install -c bioconda cellprofiler
