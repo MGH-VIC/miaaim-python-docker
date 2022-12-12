@@ -471,7 +471,9 @@ class IntraModalityDataset:
             self.DeepSlice(channels=channels)
 
         # convert to tuple and back to pathlib after logging
-        dim_range = literal_eval(dim_range)
+        if isinstance(dim_range,str):
+            dim_range = literal_eval(dim_range)
+
         output_dir = Path(output_dir) if output_dir is not None else None
 
         # check for landmarks
@@ -715,12 +717,12 @@ class IntraModalityDataset:
         self.umap_optimal_dim = opt_dim
 
     def RunOptimalParametricUMAP(
-        self, 
-        import_args={'subsample':True,'method':'default'}, 
-        dim_range=(1,11), 
-        landmarks=3000, 
+        self,
+        import_args={'subsample':True,'method':'default'},
+        dim_range=(1,11),
+        landmarks=3000,
         export_diagnostics=False,
-        output_dir=None, 
+        output_dir=None,
         n_jobs=1,
         channels=None,
         **kwargs
@@ -779,7 +781,9 @@ class IntraModalityDataset:
             self.DeepSlice(channels=channels)
 
         # convert to tuple and back to pathlib after logging
-        dim_range = literal_eval(dim_range)
+        if isinstance(dim_range,str):
+            dim_range = literal_eval(dim_range)
+
         output_dir = Path(output_dir) if output_dir is not None else None
 
         # check for landmarks
@@ -819,7 +823,7 @@ class IntraModalityDataset:
         dim_range = range(dim_range[0], dim_range[1])
         # Print update
         logging.info(f"Computing UMAP simplicial set on {tmp_frame.shape[1]} image channels...")
-        
+
         # Check for landmark subsampling
         if self.landmarks is not None:
                 # Run UMAP on the first iteration -- we will skip simplicial set construction in next iterations
@@ -1403,7 +1407,7 @@ class IntraModalityDataset:
         # logger
         logging.info("DeepSlice: slicing all data for images")
         # update yaml logger
-        self.yaml_log['ProcessingSteps'].append({"DeepSlice":{'channels':channels}})
+        # self.yaml_log['ProcessingSteps'].append({"DeepSlice":{'channels':channels}})
 
         # Iterate through the set dictionary
         for f, hdi_imp in self.set_dict.items():
@@ -1809,8 +1813,11 @@ class IntraModalityDataset:
                     continue
             # Otherwise export the image
             else:
+                if isinstance(hdi_imp.hdi.data.processed_mask, scipy.sparse.coo_matrix):
+                    # convert to array
+                    hdi_imp.hdi.data.processed_mask = hdi_imp.hdi.data.processed_mask.toarray()
                 # Export the original image
-                Export1(hdi_imp.hdi.data.processed_mask, im_name, padding, target_size)
+                Export1(hdi_imp.hdi.data.processed_mask.toarray(), im_name, padding, target_size)
 
             connect_dict.update({f: im_name})
 
