@@ -17,7 +17,7 @@ conda install -c -y conda-forge tensorflow-probability
 conda install -c -y conda-forge umap-learn
 conda install -c -y conda-forge imagecodecs
 # conda install -c bioconda cellprofiler
-conda install -c -y conda-forge spyder
+conda install -c conda-forge spyder
 conda install -y dask
 conda install -y ipykernel
 conda install -y pip
