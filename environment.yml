@@ -14,6 +14,9 @@ dependencies:
    - pathlib
    - uncertainties
    - pyyaml
+   - tensorflow
    - umap-learn
    - dask
    - ipykernel
+   - pip:
+     - centrosome
