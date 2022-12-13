@@ -9,7 +9,7 @@ import logging
 
 # Import custom modules
 #from HDIprep import hdi_prep
-from miaaim.proc import hdi_proc
+from miaaim.proc import hdiproc
 
 # pars = "/Users/joshuahess/Desktop/miaaim-development-TMA/01_IMCextractCores/yaml/01_ROI012.yaml"
 
@@ -39,10 +39,10 @@ def RunHDIprepYAML(pars, im=None, out_dir=None):
     # check for empty im input
     if im is None:
         # do not use im flag
-        intramod_set = hdi_proc.HDIpreprocessing(**yml["ImportOptions"])
+        intramod_set = hdiproc.HDIpreprocessing(**yml["ImportOptions"])
     else:
         # Use the import options in the yml object to import all datasets
-        intramod_set = hdi_proc.HDIpreprocessing(im,**yml["ImportOptions"])
+        intramod_set = hdiproc.HDIpreprocessing(im,**yml["ImportOptions"])
 
     # Iterate through each step
     for s in range(len(yml["ProcessingSteps"])):

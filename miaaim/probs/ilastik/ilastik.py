@@ -691,6 +691,7 @@ class Ilastik():
         """
         # log
         logging.info("QC: extracting quality control information")
+        self.yaml_log['ProcessingSteps'].append("QC")
 
         # provenance
         self._exportYAML()

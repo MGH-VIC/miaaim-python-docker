@@ -160,10 +160,10 @@ def OtsuThresh(image,correction=None):
 
 
 def smooth_image(
-        image, 
-        filter_size, 
-        mask=None, 
-        use_cellprofiler=False, 
+        image,
+        filter_size,
+        mask=None,
+        use_cellprofiler=False,
         parallel=False
         ):
     """
@@ -187,11 +187,11 @@ def smooth_image(
     TYPE
         DESCRIPTION.
 
-    """    
+    """
     # check for cellprofiler smoothing
     # this condition copied from cellprofiler github
     if use_cellprofiler:
-        
+
         if filter_size == 0:
             return image
         sigma = filter_size / 2.35
@@ -210,11 +210,11 @@ def smooth_image(
                 -0.5 * np.arange(-filter_size, filter_size + 1) ** 2 / sigma ** 2
             )
         )
-    
+
         def fgaussian(image):
             output = scipy.ndimage.convolve1d(image, f, axis=0, mode="constant")
             return scipy.ndimage.convolve1d(output, f, axis=1, mode="constant")
-    
+
         #
         # Use the trick where you similarly convolve an array of ones to find
         # out the edge effects, then divide to correct the edge effects
@@ -229,23 +229,23 @@ def smooth_image(
     else:
         # simply smooth using the gaussian smoothing skimage function
         smoothed = GaussianFilter(channel=image,
-                                  sigma=filter_size, 
+                                  sigma=filter_size,
                                   parallel=parallel)
     return smoothed
 
 
 
 
-def separate_neighboring_objects(labeled_image, 
+def separate_neighboring_objects(labeled_image,
                                  object_count,
                                  image,
-                                 mask=None,                                
+                                 mask=None,
                                  force_resmooth=True,
                                  smoothing_filter_size=2,
                                  use_cellprofiler_smoothing=False,
-                                 parallel=False,                                
-                                 unclump_method=UN_INTENSITY, 
-                                 watershed_method=WA_INTENSITY, 
+                                 parallel=False,
+                                 unclump_method=UN_INTENSITY,
+                                 watershed_method=WA_INTENSITY,
                                  automatic_suppression=True,
                                  advanced=False,
                                  basic=True,
@@ -302,7 +302,7 @@ def separate_neighboring_objects(labeled_image,
         DESCRIPTION.
 
     """
-    
+
     # check for smoothing
     if force_resmooth:
         blurred_image = smooth_image(image=image,
@@ -319,13 +319,13 @@ def separate_neighboring_objects(labeled_image,
     else:
         maxima_suppression_size = maxima_suppression_size_value
     reported_maxima_suppression_size = maxima_suppression_size
-        
+
     maxima_mask = centrosome.cpmorphology.strel_disk(
         max(1, maxima_suppression_size - 0.5)
     )
     distance_transformed_image = None
-    
-    
+
+
     if basic or unclump_method == UN_INTENSITY:
         # Remove dim maxima
         maxima_image = get_maxima(
@@ -393,7 +393,7 @@ def separate_neighboring_objects(labeled_image,
 
 def get_maxima(image, labeled_image, maxima_mask, image_resize_factor):
     """
-    
+
 
     Parameters
     ----------
@@ -412,7 +412,7 @@ def get_maxima(image, labeled_image, maxima_mask, image_resize_factor):
         DESCRIPTION.
 
     """
-    
+
     if image_resize_factor < 1.0:
         shape = numpy.array(image.shape) * image_resize_factor
         i_j = (
@@ -583,7 +583,7 @@ def filter_on_border(image, labeled_image, image_mask=False, mask=None, exclude_
 def set_image(image, convert=True):
     """
     Taken directly from cellprofiler.
-    
+
     Convert the image to a numpy array of dtype = np.float64.
     Rescale according to Matlab's rules for im2double:
     * single/double values: keep the same
@@ -652,11 +652,11 @@ def set_image(image, convert=True):
 # =============================================================================
 
 def filter_labels(
-        labels_out, 
-        objects, 
-        image, 
-        segmented_labels, 
-        mask=None, 
+        labels_out,
+        objects,
+        image,
+        segmented_labels,
+        mask=None,
         wants_discard_edge=False
         ):
     """Filter labels out of the output
@@ -703,7 +703,7 @@ def filter_labels(
         # Run the segmented labels through this to filter out edge
         # labels
         segmented_labels_out = lookup[segmented_labels_out]
-        
+
     return segmented_labels_out
 
 
@@ -764,7 +764,7 @@ def NuclearSegmentation(
         use_cellprofiler_smoothing=False,
         parallel=False,
         threshold_correction=1.2,
-        size_range_min=8, 
+        size_range_min=8,
         size_range_max=16,
         exlcude_outside_size_range=False,
         exclude_border_labels=True,
@@ -820,7 +820,7 @@ def NuclearSegmentation(
                                           mask=mask,
                                           use_cellprofiler=use_cellprofiler_smoothing,
                                           parallel=parallel)
-    
+
     # binary thresholding of smoothed image
     int_mask, binary_image, label_mask = OtsuThresh(image=smoothed_nuclear_image,
                                                     correction=threshold_correction)
@@ -835,7 +835,7 @@ def NuclearSegmentation(
     binary_image = centrosome.cpmorphology.fill_labeled_holes(
         binary_image, size_fn=size_fn
     )
-    
+
     # get labeled image and object counts
     labeled_image, object_count = scipy.ndimage.label(
         binary_image, numpy.ones((3, 3), bool)
@@ -845,20 +845,20 @@ def NuclearSegmentation(
     (labeled_image,
      object_count,
      maxima_suppression_size,
-    ) = separate_neighboring_objects(labeled_image=labeled_image, 
+    ) = separate_neighboring_objects(labeled_image=labeled_image,
                                  object_count=object_count,
                                  image=smoothed_nuclear_image,
                                  mask=mask,
                                  force_resmooth=force_separation_smoothing,
                                  smoothing_filter_size=separation_smoothing_filter_size,
-                                 unclump_method=unclump_method, 
-                                 watershed_method=watershed_method, 
+                                 unclump_method=unclump_method,
+                                 watershed_method=watershed_method,
                                  automatic_suppression=automatic_suppression,
                                  advanced=advanced,
                                  basic=basic,
                                  size_range_min=size_range_min,
                                  size_range_max=size_range_max)
-    
+
     # get unedited labels
     unedited_labels = labeled_image.copy()
 
@@ -886,7 +886,7 @@ def NuclearSegmentation(
         # create outline of labels of size excluded labels
         outline_size_excluded_image = centrosome.outline.outline(
             size_excluded_labeled_image
-        )        
+        )
     else:
         size_excluded_labeled_image = None
         outline_size_excluded_image = None
@@ -904,11 +904,11 @@ def NuclearSegmentation(
     outline_image = centrosome.outline.outline(labeled_image)
 
     # return information
-    return (labeled_image, 
+    return (labeled_image,
             object_count,
-            outline_image, 
-            border_excluded_labeled_image, 
-            outline_border_excluded_image, 
+            outline_image,
+            border_excluded_labeled_image,
+            outline_border_excluded_image,
             size_excluded_labeled_image,
             outline_size_excluded_image,
             unedited_labels)
@@ -922,13 +922,13 @@ def MembraneSegmentation(
         labels_in,
         distance_to_dilate=3,
         threshold_correction=1.8,
-        fill_holes=True, 
+        fill_holes=True,
         method=M_PROPAGATION,
         discard_edge=True,
         regularization_factor=1.8
         ):
     """
-    
+
 
     Parameters
     ----------
@@ -984,9 +984,9 @@ def MembraneSegmentation(
     is_touching = np.zeros(numpy.max(labels_in) + 1, bool)
     is_touching[labels_touching_edge] = True
     is_touching = is_touching[labels_in]
-    
+
     labels_in[(~is_touching) & (objects == 0)] = 0
-        
+
     # check for methods of secondary object detection
     if method in (M_DISTANCE_B, M_DISTANCE_N):
         if method == M_DISTANCE_N:
@@ -1016,11 +1016,11 @@ def MembraneSegmentation(
 
         # filter
         segmented_out = filter_labels(
-            small_removed_segmented_out, 
-            objects, 
-            image=membrane_image, 
-            mask=mask, 
-            segmented_labels=labels_in, 
+            small_removed_segmented_out,
+            objects,
+            image=membrane_image,
+            mask=mask,
+            segmented_labels=labels_in,
             wants_discard_edge=discard_edge
         )
     # check for propagation type methods
@@ -1037,11 +1037,11 @@ def MembraneSegmentation(
             small_removed_segmented_out = labels_out.copy()
         # filter as in the other options
         segmented_out = filter_labels(
-            small_removed_segmented_out, 
-            objects, 
-            image=membrane_image, 
-            mask=mask, 
-            segmented_labels=labels_in, 
+            small_removed_segmented_out,
+            objects,
+            image=membrane_image,
+            mask=mask,
+            segmented_labels=labels_in,
             wants_discard_edge=discard_edge
         )
     # check for watershed gradient based method
@@ -1056,18 +1056,18 @@ def MembraneSegmentation(
         #
         watershed_mask = numpy.logical_or(thresholded_image, labels_in > 0)
         watershed_mask = numpy.logical_and(watershed_mask, mask)
-        
+
         #
         # Perform the first watershed
         #
-         
+
         labels_out = skimage.segmentation.watershed(
             connectivity=numpy.ones((3, 3), bool),
             image=sobel_image,
             markers=labels_in,
             mask=watershed_mask,
         )
-        
+
         if fill_holes:
             label_mask = labels_out == 0
             small_removed_segmented_out = centrosome.cpmorphology.fill_labeled_holes(
@@ -1077,11 +1077,11 @@ def MembraneSegmentation(
             small_removed_segmented_out = labels_out.copy()
         # filter as in the other options
         segmented_out = filter_labels(
-            small_removed_segmented_out, 
-            objects, 
-            image=membrane_image, 
-            mask=mask, 
-            segmented_labels=labels_in, 
+            small_removed_segmented_out,
+            objects,
+            image=membrane_image,
+            mask=mask,
+            segmented_labels=labels_in,
             wants_discard_edge=discard_edge
         )
     # intensity watershed method
@@ -1116,14 +1116,14 @@ def MembraneSegmentation(
             small_removed_segmented_out = labels_out
         # filter as in the other options
         segmented_out = filter_labels(
-            small_removed_segmented_out, 
-            objects, 
-            image=membrane_image, 
-            mask=mask, 
-            segmented_labels=labels_in, 
+            small_removed_segmented_out,
+            objects,
+            image=membrane_image,
+            mask=mask,
+            segmented_labels=labels_in,
             wants_discard_edge=discard_edge
         )
-            
+
     # return segmentation
     return segmented_out
 
@@ -1156,13 +1156,13 @@ def MembraneSegmentation(
 # image = skimage.io.imread(im,plugin='tifffile')
 # # get nuclear channel from probability image
 # nuclear_image = image[:,:,0].copy()
-# 
+#
 # # run nuclear segmentation
-# (labeled_image, 
+# (labeled_image,
 #  object_count,
-#  outline_image, 
-#  border_excluded_labeled_image, 
-#  outline_border_excluded_image, 
+#  outline_image,
+#  border_excluded_labeled_image,
+#  outline_border_excluded_image,
 #  size_excluded_labeled_image,
 #  outline_size_excluded_image,
 #  unedited_labels) = NuclearSegmentation(
@@ -1174,7 +1174,7 @@ def MembraneSegmentation(
 #                                      use_cellprofiler_smoothing=False,
 #                                      parallel=False,
 #                                      threshold_correction=1.2,
-#                                      size_range_min=8, 
+#                                      size_range_min=8,
 #                                      size_range_max=15,
 #                                      exlcude_outside_size_range=False,
 #                                      exclude_border_labels=True,
@@ -1184,13 +1184,13 @@ def MembraneSegmentation(
 #                                      advanced=False,
 #                                      basic=True
 #                                      )
-# 
-# 
+#
+#
 # # get boundaries
 # boundst = skimage.segmentation.find_boundaries(labeled_image)
 # final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
 # skimage.io.imsave("/Users/joshuahess/Desktop/testNuclear.tiff",final_outt)
-# 
+#
 # =============================================================================
 
 
@@ -1199,9 +1199,9 @@ def MembraneSegmentation(
 # test membrane segmentation pipeline
 # =============================================================================
 # =============================================================================
-# 
+#
 # labels_in = labeled_image.copy()
-# 
+#
 # segmented_out = MembraneSegmentation(
 #     membrane_image=image[:,:,1],
 #     mask=None,
@@ -1209,18 +1209,18 @@ def MembraneSegmentation(
 #     labels_in=labels_in,
 #     distance_to_dilate=5,
 #     threshold_correction=1.8,
-#     fill_holes=True, 
+#     fill_holes=True,
 #     method=M_PROPAGATION,
 #     discard_edge=True,
 #     regularization_factor=1.8
 #     )
-# 
-# 
+#
+#
 # # get boundaries
 # boundst = skimage.segmentation.find_boundaries(segmented_out)
 # final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
 # skimage.io.imsave("/Users/joshuahess/Desktop/testMembrane.tiff",final_outt)
-# 
+#
 # =============================================================================
 
 
@@ -1229,25 +1229,25 @@ def MembraneSegmentation(
 # =============================================================================
 # import matplotlib.pyplot as plt
 # import miaaim.io.imwrite._export
-# 
+#
 # test = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019/probabilities/imc/ilastik")
 # root = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019")
-# 
+#
 # ABC = HDISegmentation(probabilities_dir=test,root_folder=root)
 # ABC.NuclearSegmentation()
 # ABC.MembraneSegmentation()
-# 
+#
 # plt.imshow(ABC.labeled_image)
 # plt.imshow(ABC.whole_cell_segmented)
-# 
+#
 # tmp = ABC.whole_cell_segmented.copy()
-# 
+#
 # ABC.ExportSegmentationMask()
-# 
+#
 # skimage.io.imsave("/Users/joshuahess/Desktop/test.tiff",tmp)
-# 
+#
 # miaaim.io.imwrite._export.HDIexporter(tmp, "/Users/joshuahess/Desktop/test.tiff")
-# 
+#
 # =============================================================================
 # =============================================================================
 # MIAAIM segmentation class
@@ -1259,9 +1259,9 @@ def MembraneSegmentation(
 class HDISegmentation:
     """
     MIAAIM single-cell segmentation pipeline.
-    
+
     """
-        
+
     def __init__(
             self,
             probabilities_dir="ilastik/imc",
@@ -1276,7 +1276,7 @@ class HDISegmentation:
             qc=True
             ):
         """
-        
+
 
         Parameters
         ----------
@@ -1306,7 +1306,7 @@ class HDISegmentation:
         None.
 
         """
-        
+
         # create logger format
         FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
 
@@ -1322,7 +1322,7 @@ class HDISegmentation:
         # create names
         self.probabilities_dir = root_folder.joinpath(probabilities_dir)
         self.probabilities_method = probabilities_dir.name
-        
+
         if name is None:
             self.name = self.probabilities_dir.parent.name
         else:
@@ -1454,7 +1454,7 @@ class HDISegmentation:
         self.nuclear_index = nuclear_index
         self.membrane_index = membrane_index
         self.background_index = background_index
-        
+
         # other attributes to be filled
         self.probabilities_image = None
         self.mask = None
@@ -1467,7 +1467,7 @@ class HDISegmentation:
         self.size_excluded_labeled_image = None
         self.outline_size_excluded_image = None
         self.unedited_labels = None
-        
+
         self.qc = qc
 
         # print first log
@@ -1477,10 +1477,10 @@ class HDISegmentation:
         logging.info(f'ROOT FOLDER: {self.root_folder}')
         logging.info(f'PROVENANCE FOLDER: {self.prov_dir}')
         logging.info(f'QC FOLDER: {self.qc_seg_name_dir} \n')
-        
+
         # Get file extensions for tiff probability images
         tiff_ext = [".tif", ".tiff"]
-        
+
         # check for input image
         logging.info("Parsing probabilities image...")
         if probabilities_image is None:
@@ -1499,8 +1499,8 @@ class HDISegmentation:
         # read and add class attributes
         self.probabilities_image = skimage.io.imread(im)
         self.image_name = im.name.replace(im.suffix,"")
-        self.image_name_full = im       
-        
+        self.image_name_full = im
+
         # update yaml file
         self.yaml_log.update({'MODULE':"Segmentation"})
         self.yaml_log.update({'METHOD':"hdseg"})
@@ -1514,8 +1514,8 @@ class HDISegmentation:
                                                 'module_name':str(module_name),
                                                 'name':self.name,
                                                 'qc':qc}})
-         
-        
+
+
         # update logger
         logging.info(f'\n')
         logging.info("PROCESSING DATA")
@@ -1530,7 +1530,7 @@ class HDISegmentation:
             use_cellprofiler_smoothing=False,
             parallel=False,
             threshold_correction=1.2,
-            size_range_min=8, 
+            size_range_min=8,
             size_range_max=15,
             exlcude_outside_size_range=False,
             exclude_border_labels=True,
@@ -1599,22 +1599,41 @@ class HDISegmentation:
             DESCRIPTION.
 
         """
-        
+        # update logger
+        self.yaml_log.update({'ProcessingSteps':[]})
+        self.yaml_log['ProcessingSteps'].append({"NuclearSegmentation":{'mask':mask,
+                                        'threshold_smoothing_filter_size':threshold_smoothing_filter_size,
+                                        'force_separation_smoothing':force_separation_smoothing,
+                                        'separation_smoothing_filter_size':separation_smoothing_filter_size,
+                                        'use_cellprofiler_smoothing':use_cellprofiler_smoothing,
+                                        'parallel':parallel,
+                                        'threshold_correction':threshold_correction,
+                                        'size_range_min':size_range_min,
+                                        'size_range_max':size_range_max,
+                                        'exlcude_outside_size_range':exlcude_outside_size_range,
+                                        'exclude_border_labels':exclude_border_labels,
+                                        'unclump_method':unclump_method,
+                                        'watershed_method':watershed_method,
+                                        'automatic_suppression':automatic_suppression,
+                                        'advanced':advanced,
+                                        'basic':basic}})
+
+
         # check for mask
         if mask:
             mask = self.mask.copy()
         else:
-            mask=None    
-    
+            mask=None
+
         # get nuclear channel from probability image
         nuclear_image = self.probabilities_image[:,:,self.nuclear_index].copy()
-        
+
         # run nuclear segmentation
-        (labeled_image, 
+        (labeled_image,
          object_count,
-         outline_image, 
-         border_excluded_labeled_image, 
-         outline_border_excluded_image, 
+         outline_image,
+         border_excluded_labeled_image,
+         outline_border_excluded_image,
          size_excluded_labeled_image,
          outline_size_excluded_image,
          unedited_labels) = NuclearSegmentation(
@@ -1626,7 +1645,7 @@ class HDISegmentation:
              use_cellprofiler_smoothing=use_cellprofiler_smoothing,
              parallel=parallel,
              threshold_correction=threshold_correction,
-             size_range_min=size_range_min, 
+             size_range_min=size_range_min,
              size_range_max=size_range_max,
              exlcude_outside_size_range=exlcude_outside_size_range,
              exclude_border_labels=exclude_border_labels,
@@ -1636,12 +1655,12 @@ class HDISegmentation:
              advanced=advanced,
              basic=basic
              )
-        
+
         # get boundaries
         # boundst = skimage.segmentation.find_boundaries(labeled_image)
         self.nuclear_segmentation_qc_image = np.stack(
             [self.probabilities_image[:,:,self.nuclear_index],
-             self.probabilities_image[:,:,self.membrane_index], 
+             self.probabilities_image[:,:,self.membrane_index],
              outline_image]
             )
         # set class attributes
@@ -1691,18 +1710,25 @@ class HDISegmentation:
             DESCRIPTION.
 
         """
-        
+        self.yaml_log['ProcessingSteps'].append({"MembraneSegmentation":{'mask':mask,
+                                        'distance_to_dilate':distance_to_dilate,
+                                        'threshold_correction':threshold_correction,
+                                        'fill_holes':fill_holes,
+                                        'method':method,
+                                        'discard_edge':discard_edge,
+                                        'regularization_factor':regularization_factor}})
+
         # check for mask
         if mask:
             mask = self.mask.copy()
         else:
             mask=None
-        
+
         # get membrane channel from probability image
         membrane_image = self.probabilities_image[:,:,self.membrane_index ].copy()
         # get nuclear segmentation labels
         labels_in = self.labeled_image.copy()
-        
+
         # run membrane based segmentation using the previous nuclear segmentation
         segmented_out = MembraneSegmentation(
             membrane_image=membrane_image,
@@ -1711,21 +1737,21 @@ class HDISegmentation:
             labels_in=labels_in,
             distance_to_dilate=distance_to_dilate,
             threshold_correction=threshold_correction,
-            fill_holes=fill_holes, 
+            fill_holes=fill_holes,
             method=method,
             discard_edge=discard_edge,
             regularization_factor=regularization_factor
             )
-    
+
         # get boundaries
         outline_image = centrosome.outline.outline(segmented_out)
         # bcreate overlayed image for qc
         self.membrane_segmentation_qc_image = np.stack(
             [self.probabilities_image[:,:,self.nuclear_index],
-             self.probabilities_image[:,:,self.membrane_index], 
+             self.probabilities_image[:,:,self.membrane_index],
              outline_image]
             )
-        
+
         # store the final segmentation
         self.whole_cell_segmented = segmented_out
         # return final whole cell segmentation
@@ -1790,7 +1816,7 @@ class HDISegmentation:
             out_name=None
             ):
         """
-        
+
 
         Parameters
         ----------
@@ -1804,7 +1830,10 @@ class HDISegmentation:
         None.
 
         """
-        
+
+        self.yaml_log['ProcessingSteps'].append({"ExportSegmentationMask":{'out_dir':out_dir,
+                                        'out_name':out_name}})
+
         # check for defaults
         if out_dir is None:
             # set as the output directory from initialized
@@ -1815,7 +1844,7 @@ class HDISegmentation:
             out_name = self.image_name+"_mask.tiff"
         else:
             out_name = out_name
-        
+
         # write as tiff
         self._exportSegmentationMask(out_dir,out_name)
 
@@ -1826,7 +1855,7 @@ class HDISegmentation:
             out_name=None
             ):
         """
-        
+
 
         Parameters
         ----------
@@ -1848,7 +1877,7 @@ class HDISegmentation:
         if out_name is None:
             out_name = self.image_name+"_maskQC.tiff"
         else:
-            out_name = out_name        
+            out_name = out_name
         # write as tiff
         self._exportSegmentationMaskQC(out_dir,out_name)
 
@@ -1879,6 +1908,7 @@ class HDISegmentation:
         """
         # log
         logging.info("QC: extracting quality control information")
+        self.yaml_log['ProcessingSteps'].append("QC")
 
         # export QC information
         # check for qc
