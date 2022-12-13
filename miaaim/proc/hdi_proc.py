@@ -207,17 +207,9 @@ class IntraModalityDataset:
                         "RunParametricUMAP",
                         "RunOptimalParametricUMAP"
                         ]
-        # check for reloading by searching for previous steps
-
-        if not list(self.yaml_log['ProcessingSteps'][0].keys())[0] in red_commands:
-            # ensure the most previous step is apply manual mask
-            if not list(self.yaml_log['ProcessingSteps'][-1].keys())[0] == "ApplyMask":
-                # throw error
-                logging.error("Apply mask before dimension reduction.")
-
-            # reload
-            logging.info('Reloading using processed mask for dimension reduction')
-            self._reduce_reload(subsample=subsample,method=method,**kwargs)
+        # reload
+        logging.info('Reloading using processed mask for dimension reduction')
+        self._reduce_reload(subsample=subsample,method=method,**kwargs)
 
     # Create dimension reduction method with UMAP
     def RunUMAP(self, import_args={'subsample':True,'method':'default'}, **kwargs):
@@ -1203,6 +1195,8 @@ class IntraModalityDataset:
                 hdi_imp.hdi.data.processed_image = hdi_imp.hdi.data.image.copy()
                 # Use the mask on the image
                 hdi_imp.hdi.data.processed_image[~hdi_imp.hdi.data.mask.toarray()] = 0
+                # go ahead and mask the image as well
+                hdi_imp.hdi.data.image[~hdi_imp.hdi.data.mask.toarray()] = 0
             # Otherwise the processed image exists and now check the data type
             else:
                 # Proceed to process the processed image as an array
