@@ -1131,124 +1131,6 @@ def MembraneSegmentation(
 
 
 
-
-
-
-# =============================================================================
-# =============================================================================
-# =============================================================================
-# TESTING
-# =============================================================================
-# =============================================================================
-# =============================================================================
-
-
-
-# =============================================================================
-# test nuclear segmentation pipeline
-# =============================================================================
-
-
-# =============================================================================
-# # set image path
-# im = Path("/Users/joshuahess/Desktop/ROI028_PROSTATETMA020_Probabilities.tiff")
-# #Read the image
-# image = skimage.io.imread(im,plugin='tifffile')
-# # get nuclear channel from probability image
-# nuclear_image = image[:,:,0].copy()
-#
-# # run nuclear segmentation
-# (labeled_image,
-#  object_count,
-#  outline_image,
-#  border_excluded_labeled_image,
-#  outline_border_excluded_image,
-#  size_excluded_labeled_image,
-#  outline_size_excluded_image,
-#  unedited_labels) = NuclearSegmentation(
-#                                      nuclear_image,
-#                                      mask=None,
-#                                      threshold_smoothing_filter_size=1.8,
-#                                      force_separation_smoothing=False,
-#                                      separation_smoothing_filter_size=3,
-#                                      use_cellprofiler_smoothing=False,
-#                                      parallel=False,
-#                                      threshold_correction=1.2,
-#                                      size_range_min=8,
-#                                      size_range_max=15,
-#                                      exlcude_outside_size_range=False,
-#                                      exclude_border_labels=True,
-#                                      unclump_method=UN_INTENSITY,
-#                                      watershed_method=WA_INTENSITY,
-#                                      automatic_suppression=True,
-#                                      advanced=False,
-#                                      basic=True
-#                                      )
-#
-#
-# # get boundaries
-# boundst = skimage.segmentation.find_boundaries(labeled_image)
-# final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
-# skimage.io.imsave("/Users/joshuahess/Desktop/testNuclear.tiff",final_outt)
-#
-# =============================================================================
-
-
-
-# =============================================================================
-# test membrane segmentation pipeline
-# =============================================================================
-# =============================================================================
-#
-# labels_in = labeled_image.copy()
-#
-# segmented_out = MembraneSegmentation(
-#     membrane_image=image[:,:,1],
-#     mask=None,
-#     objects=labels_in,
-#     labels_in=labels_in,
-#     distance_to_dilate=5,
-#     threshold_correction=1.8,
-#     fill_holes=True,
-#     method=M_PROPAGATION,
-#     discard_edge=True,
-#     regularization_factor=1.8
-#     )
-#
-#
-# # get boundaries
-# boundst = skimage.segmentation.find_boundaries(segmented_out)
-# final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
-# skimage.io.imsave("/Users/joshuahess/Desktop/testMembrane.tiff",final_outt)
-#
-# =============================================================================
-
-
-
-
-# =============================================================================
-# import matplotlib.pyplot as plt
-# import miaaim.io.imwrite._export
-#
-# test = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019/probabilities/imc/ilastik")
-# root = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019")
-#
-# ABC = HDISegmentation(probabilities_dir=test,root_folder=root)
-# ABC.NuclearSegmentation()
-# ABC.MembraneSegmentation()
-#
-# plt.imshow(ABC.labeled_image)
-# plt.imshow(ABC.whole_cell_segmented)
-#
-# tmp = ABC.whole_cell_segmented.copy()
-#
-# ABC.ExportSegmentationMask()
-#
-# skimage.io.imsave("/Users/joshuahess/Desktop/test.tiff",tmp)
-#
-# miaaim.io.imwrite._export.HDIexporter(tmp, "/Users/joshuahess/Desktop/test.tiff")
-#
-# =============================================================================
 # =============================================================================
 # MIAAIM segmentation class
 # =============================================================================
@@ -1264,7 +1146,7 @@ class HDISegmentation:
 
     def __init__(
             self,
-            probabilities_dir="ilastik/imc",
+            probabilities_dir="probabilitiesilastik/imc",
             probabilities_image=None,
             image_mask=None,
             nuclear_index = 0,
@@ -1321,7 +1203,7 @@ class HDISegmentation:
 
         # create names
         self.probabilities_dir = root_folder.joinpath(probabilities_dir)
-        self.probabilities_method = probabilities_dir.name
+        self.probabilities_method = self.probabilities_dir.name
 
         if name is None:
             self.name = self.probabilities_dir.parent.name
@@ -1497,7 +1379,8 @@ class HDISegmentation:
         else:
             im = Path(probabilities_image)
         # read and add class attributes
-        self.probabilities_image = skimage.io.imread(im)
+        logging.info(f"Reading {str(im)}")
+        self.probabilities_image = skimage.io.imread(im,plugin='tifffile')
         self.image_name = im.name.replace(im.suffix,"")
         self.image_name_full = im
 
@@ -1599,6 +1482,8 @@ class HDISegmentation:
             DESCRIPTION.
 
         """
+        # log
+        logging.info("NuclearSegmentation: performing nuclei-based segmentation")
         # update logger
         self.yaml_log.update({'ProcessingSteps':[]})
         self.yaml_log['ProcessingSteps'].append({"NuclearSegmentation":{'mask':mask,
@@ -1710,6 +1595,8 @@ class HDISegmentation:
             DESCRIPTION.
 
         """
+        # log
+        logging.info("MembraneSegmentation: performing membrane-based segmentation")
         self.yaml_log['ProcessingSteps'].append({"MembraneSegmentation":{'mask':mask,
                                         'distance_to_dilate':distance_to_dilate,
                                         'threshold_correction':threshold_correction,
@@ -1807,7 +1694,7 @@ class HDISegmentation:
         out_dir = Path(out_dir)
         outfile = out_dir.joinpath(out_name)
         # save image
-        skimage.io.imsave(outfile, self.membrane_segmentation_qc_image)
+        skimage.io.imsave(outfile, self.membrane_segmentation_qc_image.astype(np.uint16))
 
 
     def ExportSegmentationMask(
@@ -1830,7 +1717,8 @@ class HDISegmentation:
         None.
 
         """
-
+        # log
+        logging.info("ExportSegmentationMask: exporting cell segmentation mask")
         self.yaml_log['ProcessingSteps'].append({"ExportSegmentationMask":{'out_dir':out_dir,
                                         'out_name':out_name}})
 
@@ -1869,6 +1757,8 @@ class HDISegmentation:
         None.
 
         """
+        # log
+        logging.info("ExportSegmentationMaskQC: exporting cell segmentation QC mask")
         if out_dir is None:
             # set as the output directory from initialized
             out_dir = self.qc_seg_name_dir
@@ -1914,15 +1804,148 @@ class HDISegmentation:
         # check for qc
         if self.qc:
             # export processed masks
-            self.ExportQCMask()
-            # export subsampled masks
-            self.ExportSubsampleQCMask()
+            self.ExportSegmentationMaskQC(out_dir=None,out_name=None)
 
         # provenance
         self._exportYAML()
         self._exportSH()
         # close the logger
         self.logger.handlers.clear()
+
+
+
+
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# TESTING
+# =============================================================================
+# =============================================================================
+# =============================================================================
+
+
+
+# =============================================================================
+# test nuclear segmentation pipeline
+# =============================================================================
+
+
+# =============================================================================
+# # set image path
+# im = Path("/Users/joshuahess/Desktop/ROI028_PROSTATETMA020_Probabilities.tiff")
+# #Read the image
+# image = skimage.io.imread(im,plugin='tifffile')
+# # get nuclear channel from probability image
+# nuclear_image = image[:,:,0].copy()
+#
+# # run nuclear segmentation
+# (labeled_image,
+#  object_count,
+#  outline_image,
+#  border_excluded_labeled_image,
+#  outline_border_excluded_image,
+#  size_excluded_labeled_image,
+#  outline_size_excluded_image,
+#  unedited_labels) = NuclearSegmentation(
+#                                      nuclear_image,
+#                                      mask=None,
+#                                      threshold_smoothing_filter_size=1.8,
+#                                      force_separation_smoothing=False,
+#                                      separation_smoothing_filter_size=3,
+#                                      use_cellprofiler_smoothing=False,
+#                                      parallel=False,
+#                                      threshold_correction=1.2,
+#                                      size_range_min=8,
+#                                      size_range_max=15,
+#                                      exlcude_outside_size_range=False,
+#                                      exclude_border_labels=True,
+#                                      unclump_method=UN_INTENSITY,
+#                                      watershed_method=WA_INTENSITY,
+#                                      automatic_suppression=True,
+#                                      advanced=False,
+#                                      basic=True
+#                                      )
+#
+#
+# # get boundaries
+# boundst = skimage.segmentation.find_boundaries(labeled_image)
+# final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
+# skimage.io.imsave("/Users/joshuahess/Desktop/testNuclear.tiff",final_outt)
+#
+# =============================================================================
+
+
+
+# =============================================================================
+# test membrane segmentation pipeline
+# =============================================================================
+# =============================================================================
+#
+# labels_in = labeled_image.copy()
+#
+# segmented_out = MembraneSegmentation(
+#     membrane_image=image[:,:,1],
+#     mask=None,
+#     objects=labels_in,
+#     labels_in=labels_in,
+#     distance_to_dilate=5,
+#     threshold_correction=1.8,
+#     fill_holes=True,
+#     method=M_PROPAGATION,
+#     discard_edge=True,
+#     regularization_factor=1.8
+#     )
+#
+#
+# # get boundaries
+# boundst = skimage.segmentation.find_boundaries(segmented_out)
+# final_outt = np.stack([image[:,:,0],image[:,:,1], boundst])
+# skimage.io.imsave("/Users/joshuahess/Desktop/testMembrane.tiff",final_outt)
+#
+# =============================================================================
+
+
+
+
+# =============================================================================
+# import matplotlib.pyplot as plt
+# import miaaim.io.imwrite._export
+#
+# test = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019/probabilities/imc/ilastik")
+# root = Path("/Users/joshuahess/Desktop/test_new/ROI024_PROSTATE_TMA019")
+#
+
+# root = Path("/Users/joshuahess/Desktop/test")
+#
+#
+# ABC = HDISegmentation(probabilities_dir="probabilities/imc/ilastik",
+#             probabilities_image=None,
+#             image_mask=None,
+#             nuclear_index = 0,
+#             membrane_index = 1,
+#             background_index = 2,
+#             root_folder=root,
+#             module_name='hdiseg',
+#             name=None,
+#             qc=True)
+# ABC.NuclearSegmentation()
+# ABC.MembraneSegmentation()
+# #
+# plt.imshow(ABC.labeled_image)
+# plt.imshow(ABC.whole_cell_segmented)
+# #
+# # tmp = ABC.whole_cell_segmented.copy()
+# #
+# ABC.ExportSegmentationMask()
+# ABC.ExportSegmentationMaskQC()
+#
+# skimage.io.imsave("/Users/joshuahess/Desktop/test.tiff",tmp)
+#
+# miaaim.io.imwrite._export.HDIexporter(tmp, "/Users/joshuahess/Desktop/test.tiff")
+#
+# =============================================================================
+
 
 
 

@@ -1,6 +1,8 @@
+# Regionprops based single-cell quantification
+# Developer: Joshua M. Hess, BSc
+# Developed at the Vaccine & Immunotherapy Center, Mass. General Hospital
 
-
-#Import necessary modules
+# import modules
 import skimage.io
 import h5py
 import pandas as pd
@@ -9,7 +11,100 @@ import os
 import skimage.measure as measure
 from pathlib import Path
 import nibabel as nib
+import yaml
+import logging
+import sys
 
+# import custom modules
+import miaaim
+from miaaim.cli.seg.hdiseg import _parse
+
+
+
+dire = "/Users/joshuahess/Desktop/test/segmentation/imc/hdiseg-ilastik"
+a = check_image_dir(dir=dire)
+a
+
+
+def check_image_dir(dir,endings=["mask.","UMAP."]):
+    """
+    Helper function to remove extra files from directory when
+    parsing images.
+
+    Parameters
+    ----------
+    dir : TYPE
+        DESCRIPTION.
+    endings : TYPE, optional
+        DESCRIPTION. The default is ["mask","UMAP"].
+
+    Returns
+    -------
+    None.
+
+    """
+    # get list of all contents in a directory
+    all_list = SearchDir(ending="",dir=dir)
+    # create list to return
+    f_list=[]
+    # remove anything starting with . and all endings
+    for f in all_list:
+        # get name
+        nm = f.name
+        # check for starting .
+        if nm[0] == ".":
+            # do not include
+            continue
+
+        else:
+            # create tagger
+            ADD = True
+            # now check endings
+            endng = str(nm.split("_")[-1])
+            # iterate
+            for e in endings:
+                if e in endng:
+                    ADD = False
+            # now check if adding
+            if ADD:
+                f_list.append(f)
+
+    # return the list
+    return f_list
+
+
+
+
+
+def SearchDir(ending = ".txt",dir=None):
+    """Search only in given directory for files that end with
+    the specified suffix.
+
+    Parameters
+    ----------
+    ending: string (Default: ".txt")
+        Ending to search for in the given directory
+
+    dir: string (Default: None, will search in current working directory)
+        Directory to search for files in.
+
+    Returns
+    -------
+    full_list: list
+        List of pathlib objects for each file found with the given suffix.
+    """
+
+    #If directory is not specified, use the working directory
+    if dir is None:
+        tmp = Path('..')
+        dir = tmp.cwd()
+    #Search the directory only for files
+    full_list = []
+    for file in os.listdir(dir):
+        if file.endswith(ending):
+            full_list.append(Path(os.path.join(dir,file)))
+    #Return the list
+    return full_list
 
 def gini_index(mask, intensity):
     x = intensity[mask]
@@ -219,45 +314,35 @@ def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intens
     #Create pathlib object for output
     output = Path(output)
 
-    #Check if header available
-    #sniffer = csv.Sniffer()
-    #sniffer.has_header(open(channel_names).readline())
-    #If header not available
-    #if not sniffer:
-        #If header available
-        #channel_names_loaded = pd.read_csv(channel_names)
-        #channel_names_loaded_list = list(channel_names_loaded.marker_name)
-    #else:
-        #print("negative")
-        #old one column version
-        #channel_names_loaded = pd.read_csv(channel_names,header=None)
-        #Add a column index for ease
-        #channel_names_loaded.columns = ["marker"]
-        #channel_names_loaded = list(channel_names_loaded.marker.values)
-
-    #Read csv channel names
-    channel_names_loaded = pd.read_csv(channel_names)
-    #Check for size of columns
-    if channel_names_loaded.shape[1] > 1:
-        #Get the marker_name column if more than one column (CyCIF structure)
-        channel_names_loaded_list = list(channel_names_loaded.marker_name)
+    # check for channel names type
+    if isinstance(channel_names,list):
+        channel_names_loaded = channel_names.copy()
+        
+    # otherwise try to read csv file
     else:
-        #old one column version -- re-read the csv file and add column name
-        channel_names_loaded = pd.read_csv(channel_names, header = None)
-        #Add a column index for ease and for standardization
-        channel_names_loaded.columns = ["marker"]
-        channel_names_loaded_list = list(channel_names_loaded.marker)
-
-    #Check for unique marker names -- create new list to store new names
-    channel_names_loaded_checked = []
-    for idx,val in enumerate(channel_names_loaded_list):
-        #Check for unique value
-        if channel_names_loaded_list.count(val) > 1:
-            #If unique count greater than one, add suffix
-            channel_names_loaded_checked.append(val + "_"+ str(channel_names_loaded_list[:idx].count(val) + 1))
+        #Read csv channel names
+        channel_names_loaded = pd.read_csv(channel_names)
+        #Check for size of columns
+        if channel_names_loaded.shape[1] > 1:
+            #Get the marker_name column if more than one column (CyCIF structure)
+            channel_names_loaded_list = list(channel_names_loaded.marker_name)
         else:
-            #Otherwise, leave channel name
-            channel_names_loaded_checked.append(val)
+            #old one column version -- re-read the csv file and add column name
+            channel_names_loaded = pd.read_csv(channel_names, header = None)
+            #Add a column index for ease and for standardization
+            channel_names_loaded.columns = ["marker"]
+            channel_names_loaded_list = list(channel_names_loaded.marker)
+    
+        #Check for unique marker names -- create new list to store new names
+        channel_names_loaded_checked = []
+        for idx,val in enumerate(channel_names_loaded_list):
+            #Check for unique value
+            if channel_names_loaded_list.count(val) > 1:
+                #If unique count greater than one, add suffix
+                channel_names_loaded_checked.append(val + "_"+ str(channel_names_loaded_list[:idx].count(val) + 1))
+            else:
+                #Otherwise, leave channel name
+                channel_names_loaded_checked.append(val)
 
     #Clear small memory amount by clearing old channel names
     channel_names_loaded, channel_names_loaded_list = None, None
@@ -286,15 +371,8 @@ def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intens
                             )
 
 
-class Quantification:
 
-    def __init__(self):
-        raise NotImplementedError
-
-
-
-
-def MultiExtractSingleCells(masks,images,channel_names,output, mask_props=None, intensity_props=["mean_intensity"]):
+def MultiExtractSingleCells(masks,images,channel_names,output,mask_props=None, intensity_props=["mean_intensity"]):
     """Function for iterating over a list of z_stacks and output locations to
     export single-cell data from image masks"""
 
@@ -310,3 +388,366 @@ def MultiExtractSingleCells(masks,images,channel_names,output, mask_props=None, 
         im_full_name = os.path.basename(images[i])
         im_name = im_full_name.split('.')[0]
         print("Finished "+str(im_name))
+
+
+
+class HDIquantification:
+
+    def __init__(
+            self,
+            masks=None,
+            root_folder=None,   
+            mask_dir="imc/hdiseg-ilastik",
+            images=None,
+            image_dir="preprocessing/imc",         
+            channel_names=None,
+            output=None,
+            mask_props=None,
+            segmentation_method=None,
+            probabilities_method=None,
+            intensity_props=["mean_intensity"],
+            ):
+        """
+        
+
+        Parameters
+        ----------
+        masks : TYPE, optional
+            DESCRIPTION. The default is None.
+        root_folder : TYPE, optional
+            DESCRIPTION. The default is None.
+        mask_dir : TYPE, optional
+            DESCRIPTION. The default is "imc/hdiseg-ilastik".
+        images : TYPE, optional
+            DESCRIPTION. The default is None.
+        image_dir : TYPE, optional
+            DESCRIPTION. The default is "preprocessing/imc".
+        channel_names : TYPE, optional
+            DESCRIPTION. The default is None.
+        output : TYPE, optional
+            DESCRIPTION. The default is None.
+        mask_props : TYPE, optional
+            DESCRIPTION. The default is None.
+        segmentation_method : TYPE, optional
+            DESCRIPTION. The default is None.
+        probabilities_method : TYPE, optional
+            DESCRIPTION. The default is None.
+        intensity_props : TYPE, optional
+            DESCRIPTION. The default is ["mean_intensity"].
+         : TYPE
+            DESCRIPTION.
+
+        Raises
+        ------
+        Exception
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        # create logger format
+        FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
+
+        # check for root folder name
+        if root_folder is not None:
+            # make pathlib
+            root_folder = Path(root_folder)
+        else:
+            # use current working directory
+            root_folder = Path(os.getcwd())
+        self.root_folder=root_folder       
+   
+        # create names
+        self.mask_dir = root_folder.joinpath(mask_dir)
+                
+        # create direectory specific for process
+        quant_dir = root_folder.joinpath("quantification")
+        # check if exists already
+        if not quant_dir.exists():
+            # make it
+            quant_dir.mkdir()
+        # create direectory specific for process
+        quant_dir = quant_dir.joinpath(self.name)
+        # check if exists already
+        if not quant_dir.exists():
+            # make it
+            quant_dir.mkdir()
+        # create direectory specific for process
+        quant_dir = quant_dir.joinpath(f"{self.probabilities_method}")
+        # check if exists already
+        if not quant_dir.exists():
+            # make it
+            quant_dir.mkdir()
+        self.quant_dir = quant_dir
+
+        # create a docs directory
+        docs_dir = Path(root_folder).joinpath("docs")
+        # check if exists already
+        if not docs_dir.exists():
+            # make it
+            docs_dir.mkdir()
+        self.docs_dir = docs_dir
+
+        # create a parameters directory
+        pars_dir = docs_dir.joinpath("parameters")
+        # check if exists already
+        if not pars_dir.exists():
+            # make it
+            pars_dir.mkdir()
+        self.pars_dir = pars_dir
+        # create name of shell command
+        yaml_name = os.path.join(
+            Path(pars_dir),
+            f"miaaim-quant"+f'-{self.probabilities_method}-{self.name}'+".yaml"
+            )
+        # add to self
+        self.yaml_name = yaml_name
+
+        # create a qc directory
+        qc_dir = docs_dir.joinpath("qc")
+        # check if exists already
+        if not qc_dir.exists():
+            # make it
+            qc_dir.mkdir()
+        self.qc_dir = qc_dir
+
+        # create direectory specific for process
+        qc_quant_dir = qc_dir.joinpath("quantification")
+        # check if exists already
+        if not qc_quant_dir.exists():
+            # make it
+            qc_quant_dir.mkdir()
+        # create direectory specific for process
+        qc_quant_dir = qc_quant_dir.joinpath(f"{self.name}")
+        # check if exists already
+        if not qc_quant_dir.exists():
+            # make it
+            qc_quant_dir.mkdir()
+        self.qc_quant_dir = qc_quant_dir
+
+        qc_quant_name_dir = qc_quant_dir.joinpath(f"quantification-{self.probabilities_method}")
+        # check if exists already
+        if not qc_quant_name_dir.exists():
+            # make it
+            qc_quant_name_dir.mkdir()
+        self.qc_quant_name_dir = qc_quant_name_dir
+
+        # create a qc directory
+        prov_dir = docs_dir.joinpath("provenance")
+        # check if exists already
+        if not prov_dir.exists():
+            # make it
+            prov_dir.mkdir()
+        self.prov_dir = prov_dir
+        # create name of logger
+        log_name = os.path.join(
+            Path(prov_dir),
+            f"miaaim-quant"+f'-{self.probabilities_method}-{self.name}'+".log"
+            )
+
+        # start yaml log
+        self.yaml_log = {}
+        # update logger with version number of miaaim
+        self.yaml_log.update({"MIAAIM VERSION":miaaim.__version__})
+
+        # check if it exists already
+        if Path(log_name).exists():
+            # remove it if not resuming
+            Path(log_name).unlink()
+        # configure log
+        logging.basicConfig(filename=log_name,
+                                encoding='utf-8',
+                                level=logging.DEBUG,
+                                format=FORMAT)
+
+        # get logger
+        logger = logging.getLogger()
+        # writing to stdout
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        # handler.setFormatter(FORMAT)
+        logger.addHandler(handler)
+
+        # command to capture print functions to log
+        print = logger.info
+        self.log_name = None
+        self.logger = None       
+
+        # print first log
+        logging.info("MIAAIM QUANTIFICATION")
+        logging.info(f'MIAAIM VERSION {miaaim.__version__}')
+        logging.info(f'METHOD: HDIquantification')
+        logging.info(f'ROOT FOLDER: {self.root_folder}')
+        logging.info(f'PROVENANCE FOLDER: {self.prov_dir}')
+        logging.info(f'QC FOLDER: {self.qc_seg_name_dir} \n')
+
+        # Get file extensions for tiff probability images
+        tiff_ext = [".tif", ".tiff"]
+        # get file extensions for data going to quantification
+        image_ext = [".hdf5",".h5",".nii"]
+
+        # check for input image
+        logging.info("Parsing segmentation mask...")
+        if masks is None:
+            # search directory for probability image
+            fs = SearchDir(ending=tiff_ext[0],dir=self.mask_dirs)
+            if not len(fs) > 0:
+                # try other tiff extension
+                fs = SearchDir(ending=tiff_ext[1],dir=self.mask_dirs)
+            # make sure there are not more than one file in directory
+            if len(fs)>1:
+                raise Exception(f'More than one TIFF found in {str(self.mask_dir)}')
+            # get image
+            masks = fs
+        else:
+            masks = [Path(m) for m in masks]
+
+        # create names
+        self.image_dir = root_folder.joinpath(image_dir)
+        # check for input image
+        logging.info("Parsing images...")
+        if images is None:
+            # search directory for input image
+            fs = check_image_dir(dir=self.image_dir)            
+            if not len(fs) > 0:
+                # try other tiff extension
+                raise Exception(f'No images found in {str(self.image_dir)}')
+            # make sure there are not more than one file in directory
+            if len(fs)>1:
+                raise Exception(f'More than one image found in {str(self.image_dir)}')
+            # get image
+            images = fs
+        else:
+            images = [Path(im) for im in images]            
+                
+        # initialize class attributes
+        self.masks = masks
+        self.images = images
+        self.channel_names = channel_names
+        self.output = output
+        self.mask_props = mask_props
+        self.intensity_props = intensity_props
+        
+        # update yaml file
+        self.yaml_log.update({'MODULE':"Quantification"})
+        self.yaml_log.update({'METHOD':"hdiquant"})
+        self.yaml_log.update({'ImportOptions':{'probabilities_dir':str(self.probabilities_dir),
+                                                'probabilities_image':str(self.probabilities_image),
+                                                'image_mask':self.image_mask,
+                                                'nuclear_index':self.nuclear_index,
+                                                'membrane_index':self.membrane_index,
+                                                'background_index':self.background_index,
+                                                'root_folder':str(self.root_folder),
+                                                'name':self.name}})
+
+
+        # update logger
+        logging.info(f'\n')
+        logging.info("PROCESSING DATA")        
+        
+    def Quantify(self):
+        """
+        Quantify single-cell measurements using regionprops.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        # update logger
+        logging.info(f'Quantify: extracting single-cell measurements')
+        # update logger
+        self.yaml_log.update({'ProcessingSteps':[]})
+        self.yaml_log['ProcessingSteps'].append("Quantify")
+        
+        #Run the ExtractSingleCells function for this image
+        MultiExtractSingleCells(
+            self.masks,
+            self.images,
+            self.channel_names,
+            self.output, 
+            mask_props=self.mask_props, 
+            intensity_props=self.intensity_props
+            )
+        
+    def _exportYAML(self):
+        """Function to export yaml log to file for documentation
+        """
+        logging.info(f'Exporting {self.yaml_name}')
+        # open file and export
+        with open(self.yaml_name, 'w') as outfile:
+            yaml.dump(self.yaml_log, outfile, default_flow_style=False,sort_keys=False)
+
+    def _exportSH(self):
+        """Function to export sh command to file for documentation
+        """
+        logging.info(f'Exporting {self.sh_name}')
+        # get name of the python path and cli file
+        proc_fname = os.path.join(Path(_parse.__file__).parent,"_cli_quantification.py")
+        # get path to python executable
+        # create shell command script
+        with open (self.sh_name, 'w') as rsh:
+            rsh.write(f'''\
+        #! /bin/bash
+        {sys.executable} {proc_fname} --pars {self.yaml_name}
+        ''')
+
+    def QC(self):
+        """Function to export QC metrics to file for documentation
+        """
+        # log
+        logging.info("QC: extracting quality control information")
+        self.yaml_log['ProcessingSteps'].append("QC")
+
+        # provenance
+        self._exportYAML()
+        self._exportSH()
+        # close the logger
+        self.logger.handlers.clear()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
