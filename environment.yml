@@ -18,5 +18,4 @@ dependencies:
    - umap-learn
    - dask
    - ipykernel
-   - pip:
-     - centrosome
+   - centrosome
