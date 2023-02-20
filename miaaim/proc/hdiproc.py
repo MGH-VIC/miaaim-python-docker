@@ -185,20 +185,26 @@ class IntraModalityDataset:
         """
         # Iterate through the set dictionary
         for f, hdi_imp in self.set_dict.items():
-            # reload data using processed mask
-            bridger = _import.HDIreader(data=hdi_imp.hdi.data,
-                    image=hdi_imp.hdi.data.processed_image,
-                    mask=hdi_imp.hdi.data.processed_mask,
-                    channels=hdi_imp.hdi.data.channels,
-                    flatten=True,   # set flatten to true for reload
-                    filename=hdi_imp.hdi.data.filename,
-                    subsample=subsample,
-                    method=method,
-                    **kwargs
-
-            )
-            # update the set dictionary with new data loaded
-            self.set_dict[f] = bridger
+            #### TEMPORARY ####
+            # check if there is any processed image at all
+            if hdi_imp.hdi.data.processed_image is not None:
+                # reload data using processed mask
+                bridger = _import.HDIreader(data=hdi_imp.hdi.data,
+                        image=hdi_imp.hdi.data.processed_image,
+                        mask=hdi_imp.hdi.data.processed_mask,
+                        channels=hdi_imp.hdi.data.channels,
+                        flatten=True,   # set flatten to true for reload
+                        filename=hdi_imp.hdi.data.filename,
+                        subsample=subsample,
+                        method=method,
+                        **kwargs
+    
+                )
+                # update the set dictionary with new data loaded
+                self.set_dict[f] = bridger
+            else:
+                # leave the same as it was
+                self.set_dict[f] = self.set_dict[f]
 
     def _validate_reduce(self,subsample=True,method='default',**kwargs):
         # list of potential steps

@@ -124,27 +124,8 @@ def getMetadata(path,commit):
             )
         return metadata_args
 
+    
 
-# 
-# import tifffile
-# test = "/Users/joshuahess/Desktop/test_new/ROI023_LIVER_D12/input/imc/ROI023_LIVER D12.ome.tiff"
-# test = "/Users/joshuahess/Desktop/BALBc-1_Fused.tif"
-# met = getMetadata(path=test,commit='1')
-#
-#
-# tif = tifffile.TiffFile(test)
-# tif.pages[0].tags['IJMetadata'].value
-#                 x_res_tag = tif.pages[0].tags['XResolution'].value
-#                 y_res_tag = tif.pages[0].tags['YResolution'].value
-#                 physical_size_x = x_res_tag[0] / x_res_tag[1]
-#                 physical_size_y = y_res_tag[0] / y_res_tag[1]
-#
-# for k in tif.pages[0].tags.keys():
-#     print(tif.pages[0].tags[k])
-# tif.pages[0].tags[256]
-#
-# tif.pages[1]
-#
 #
 #
 # tif.pages.keyframe.get_resolution()
