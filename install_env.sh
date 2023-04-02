@@ -24,4 +24,5 @@ conda install -y pip
 python -m pip install centrosome
 # conda install -c -y conda-forge imagecodecs
 # pip install CellProfiler
+pip install --upgrade nbconvert
 python -m pip install -e .

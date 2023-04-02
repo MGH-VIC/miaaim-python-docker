@@ -115,7 +115,7 @@ class ElastixReg():
         self.fixed = Path(fixed)
         self.out_dir = Path(out_dir)
         self.p = [Path(par_file) for par_file in p]
-        self.landmark_p = [Path(par_file) for par_file in landmark_p]
+        self.landmark_p = [Path(par_file) for par_file in landmark_p] if landmark_p is not None else None
         self.moving = Path(moving)
         self.fp = None if fp is None else Path(fp)
         self.mp = None if mp is None else Path(fp)
@@ -166,7 +166,7 @@ class ElastixReg():
             # the first image channel unless you specify multiple channel inputs!
             # now we register using affine and landmark correspondence
         	    #Add the parameter files
-            self.command = self.command+' '.join([" -p "+str(self.landmark_p)])
+            self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
 			#Add to the command
             self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
         	    #Check for fixed mask
