@@ -37,9 +37,9 @@ def RunElastix(command):
 	"""
 
 	# print command
-	loggging.info(f'Elastix Command: {str(command)})
+	logging.info(f'Elastix Command: {str(command)}')
 	# print elastix update
-	loggging.info('Running elastix...')
+	logging.info('Running elastix...')
 	# start timer
 	start = time.time()
 	# send the command to system
@@ -47,7 +47,7 @@ def RunElastix(command):
 	# stop timer
 	stop = time.time()
 	# print update
-	loggging.info('Finished -- computation took '+str(stop-start)+'sec.')
+	logging.info('Finished -- computation took '+str(stop-start)+'sec.')
 	# return command
 	return command
 
@@ -85,7 +85,7 @@ class ElastixReg():
 		# create log for yaml file exporting
 		self.yaml_log = {}
         # update logger with version number of miaaim
-        self.yaml_log.update({"VERSION":miaaim.__version__})
+		self.yaml_log.update({"VERSION":miaaim.__version__})
 
 	def Register(self, fixed, moving, out_dir,p,fp=None,mp=None,fMask=None,multichannel=True):
 		"""Register images using elastix image registration and
@@ -126,48 +126,48 @@ class ElastixReg():
 		self.fMask = None if fMask is None else Path(fMask)
 
         # update logger with version number of miaaim
-        self.yaml_log.update({"Register":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}})
+		self.yaml_log.update({"Register":{'fixed':fixed,
+										  'moving':moving,
+										  'out_dir':out_dir,
+										  'p':p,
+										  'fp':fp,
+										  'mp':mp,
+										  'fMask':fMask,
+										  'multichannel':multichannel}})
 
 	    # check for making new directories
-	    if self.mkdir:
-	        n=0
-	        while n>=0:
-	            tmp_name = "elastix"+str(n)
-	            if not os.path.exists(Path(os.path.join(out_dir,tmp_name))):
-	                os.mkdir(Path(os.path.join(out_dir,tmp_name)))
-	                elastix_dir = Path(os.path.join(out_dir,tmp_name))
-	                break
-	            n+=1
+		if self.mkdir:
+			n=0
+			while n>=0:
+				tmp_name = "elastix"+str(n)
+				if not os.path.exists(Path(os.path.join(out_dir,tmp_name))):
+					os.mkdir(Path(os.path.join(out_dir,tmp_name)))
+					elastix_dir = Path(os.path.join(out_dir,tmp_name))
+					break
+				n+=1
 		else:
 			elastix_dir = out_dir
 		# update elastix directory
 		self.elastix_dir = elastix_dir
 
 		# log information
-	    logging.info(f'FIXED IMAGE: {str(self.fixed)}')
+		logging.info(f'FIXED IMAGE: {str(self.fixed)}')
 		logging.info(f'MOVING IMAGE: {str(self.moving)}')
 		logging.info(f'OUTPUT FOLDER: {str(self.out_dir)}')
 
 		# load images
 		niiFixed = _import.HDIreader(path_to_data=self.fixed,
-									path_to_markers=None,
-									flatten=False,
-									subsample=False,
-									method=None,
-									mask=self.fMask,
-									save_mem=False,
-									data=None,
-									image=None,
-									channels=None,
-									filename=None
-									)
+									 path_to_markers=None,
+									 flatten=False,
+									 subsample=False,
+									 method=None,
+									 mask=self.fMask,
+									 save_mem=False,
+									 data=None,
+									 image=None,
+									 channels=None,
+									 filename=None
+									 )
 		niiMoving = _import.HDIreader(path_to_data=self.moving,
 									path_to_markers=None,
 									flatten=False,
@@ -184,13 +184,13 @@ class ElastixReg():
 		# multichannel registration check for validating KNN mutual information
 		if multichannel:
 			# get number of channels for fixed and moving
-			if niiFixed.ndim == 2 or niiMoving.ndim == 2:
+			if niiFixed.hdi.data.image.ndim == 2 or niiMoving.hdi.data.image.ndim == 2:
 				# raise warning that aMI not recommended for single parameters
 				warnings.warn("KNN alpha MI not recommended for single channel images. Use mattes MI metric instead.", RuntimeWarning)
 			# get number of fixed image parameters
-			_,_,cF = niiFixed.shape
+			_,_,cF = niiFixed.hdi.data.image.shape
 			# get number of moving image parameters
-			_,_,mF = niiMoving.shape
+			_,_,mF = niiMoving.hdi.data.image.shape
 
 			# validate parameters
 			new_ps = utils.ValidateKNNaMIparams(cF,mF,p)
@@ -214,7 +214,7 @@ class ElastixReg():
 		self.command = self.command +" -out "+str(self.elastix_dir)
 
 	    #Check to see if there is single channel input (grayscale)
-		if niiFixed.ndim == 2 and niiMoving.ndim == 2:
+		if niiFixed.hdi.data.image.ndim == 2 and niiMoving.hdi.data.image.ndim == 2:
 			logging.info('Detected single channel input images')
 	        #Add fixed and moving image to the command string
 			self.command = self.command+" -f "+str(self.fixed)+ " -m "+str(self.moving)
@@ -237,8 +237,8 @@ class ElastixReg():
 				#Print update
 				logging.info('Exporting single channel images for multichannel input')
 		        #Read the images
-				niiFixed = niiFixed.get_fdata()
-				niiMoving = niiMoving.get_fdata()
+				niiFixed = niiFixed.hdi.data.image.copy()
+				niiMoving = niiMoving.hdi.data.image.copy()
 				#Update multichannel class option
 				self.multichannel = True
 
@@ -311,15 +311,15 @@ class InverseElastixReg():
 		self.out_dir = Path(out_dir)
 		self.mkdir = mkdir
 	    #Check for making new directories
-	    if mkdir is True:
-	        n=0
-	        while n>=0:
-	            tmp_name = "elastixInverse"+str(n)
-	            if not os.path.exists(Path(os.path.join(out_dir,tmp_name))):
-	                os.mkdir(Path(os.path.join(out_dir,tmp_name)))
-	                elastix_dir = Path(os.path.join(out_dir,tmp_name))
-	                break
-	            n+=1
+		if mkdir is True:
+			n=0
+			while n>=0:
+				tmp_name = "elastixInverse"+str(n)
+				if not os.path.exists(Path(os.path.join(out_dir,tmp_name))):
+					os.mkdir(Path(os.path.join(out_dir,tmp_name)))
+					elastix_dir = Path(os.path.join(out_dir,tmp_name))
+					break
+				n+=1
 		else:
 			elastix_dir = out_dir
 		self.elastix_dir = elastix_dir
@@ -367,7 +367,7 @@ class InverseElastixReg():
 			with tempfile.TemporaryDirectory(dir=self.elastix_dir) as tmpdirname:
 				#Print update
 				logging.info('Created temporary directory', tmpdirname)
-		        #Read the images
+				#Read the images
 				niiFixed = niiFixed.get_fdata()
 				#Update multichannel class option
 				self.multichannel = True
@@ -416,18 +416,18 @@ class Elastix():
 		self.landmarksTransform = None
 
 		# parameters for workflow
-        self.name = None
-        self.root_folder = None
-        self.qc_dir = None
-        self.qc_preprocess_dir = None
-        self.qc_preprocess_name_dir = None
-        self.docs_dir = None
-        self.preprocess_dir = None
-        self.processed_dir = None
-        self.log_name = None
-        self.logger = None
-        self.sh_name = None
-        self.yaml_name = None
+		self.name = None
+		self.root_folder = None
+		self.qc_dir = None
+		self.qc_preprocess_dir = None
+		self.qc_preprocess_name_dir = None
+		self.docs_dir = None
+		self.preprocess_dir = None
+		self.processed_dir = None
+		self.log_name = None
+		self.logger = None
+		self.sh_name = None
+		self.yaml_name = None
 
 		# input parameters not yet included
 		self.resume = resume
@@ -436,114 +436,114 @@ class Elastix():
 		# create log for yaml file exporting
 		self.yaml_log = {}
         # update logger with version number of miaaim
-        self.yaml_log.update({"VERSION":miaaim.__version__})
-        self.yaml_log.update({'METHOD':"Elastix"})
+		self.yaml_log.update({"VERSION":miaaim.__version__})
+		self.yaml_log.update({'METHOD':"Elastix"})
         # update yaml_log with processing steps (initialize to empty)
-        self.yaml_log.update({'ProcessingSteps':[]})
+		self.yaml_log.update({'ProcessingSteps':[]})
 
         # create logger format
-        FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
+		FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
 
         # create logger if qc true
-        if qc:
+		if qc:
             # check for root folder name
-            if root_folder is not None:
+			if root_folder is not None:
                 # make pathlib
-                root_folder = Path(root_folder)
-            else:
-                # use current working directory
-                root_folder = Path(os.getcwd())
+				root_folder = Path(root_folder)
+			else:
+				# use current working directory
+				root_folder = Path(os.getcwd())
 
             # create a docs directory
-            docs_dir = Path(root_folder).joinpath("docs")
+			docs_dir = Path(root_folder).joinpath("docs")
 
             # check if exists already
-            if not docs_dir.exists():
+			if not docs_dir.exists():
                 # make it
-                docs_dir.mkdir()
+				docs_dir.mkdir()
 
             # create a parameters directory
-            pars_dir = docs_dir.joinpath("parameters")
+			pars_dir = docs_dir.joinpath("parameters")
             # check if exists already
-            if not pars_dir.exists():
+			if not pars_dir.exists():
                 # make it
-                pars_dir.mkdir()
+				pars_dir.mkdir()
             # create name of shell command
-            yaml_name = os.path.join(Path(pars_dir),"miaaim-registration"+f'-{self.name}'+".yaml")
+			yaml_name = os.path.join(Path(pars_dir),"miaaim-registration"+f'-{self.name}'+".yaml")
 
             # create a qc directory
-            qc_dir = docs_dir.joinpath("qc")
+			qc_dir = docs_dir.joinpath("qc")
             # check if exists already
-            if not qc_dir.exists():
+			if not qc_dir.exists():
                 # make it
-                qc_dir.mkdir()
+				qc_dir.mkdir()
 
             # create direectory specific for process
-            qc_preprocess_dir = qc_dir.joinpath("reg")
+			qc_preprocess_dir = qc_dir.joinpath("reg")
             # check if exists already
-            if not qc_preprocess_dir.exists():
+			if not qc_preprocess_dir.exists():
                 # make it
-                qc_preprocess_dir.mkdir()
+				qc_preprocess_dir.mkdir()
 
-            qc_preprocess_name_dir = qc_preprocess_dir.joinpath(f'{self.name}')
+			qc_preprocess_name_dir = qc_preprocess_dir.joinpath(f'{self.name}')
             # check if exists already
-            if not qc_preprocess_name_dir.exists():
+			if not qc_preprocess_name_dir.exists():
                 # make it
-                qc_preprocess_name_dir.mkdir()
+				qc_preprocess_name_dir.mkdir()
 
             # create a qc directory
-            prov_dir = docs_dir.joinpath("provenance")
+			prov_dir = docs_dir.joinpath("provenance")
             # check if exists already
-            if not prov_dir.exists():
+			if not prov_dir.exists():
                 # make it
-                prov_dir.mkdir()
+				prov_dir.mkdir()
             # create name of logger
-            log_name = os.path.join(Path(prov_dir),"miaaim-registration"+f'-{self.name}'+".log")
+			log_name = os.path.join(Path(prov_dir),"miaaim-registration"+f'-{self.name}'+".log")
 
             # check if it exists already
-            if Path(log_name).exists():
+			if Path(log_name).exists():
                 # remove it
-                Path(log_name).unlink()
+				Path(log_name).unlink()
             # configure log
-            logging.basicConfig(filename=log_name,
-                                encoding='utf-8',
-                                level=logging.INFO,
-                                format=FORMAT)
+			logging.basicConfig(filename=log_name,
+								encoding='utf-8',
+								level=logging.INFO,
+								format=FORMAT)
 
             # get logger
-            logger = logging.getLogger()
+			logger = logging.getLogger()
             # command to capture print functions to log
-            print = logger.info
+			print = logger.info
 
             # create name of shell command
-            sh_name = os.path.join(Path(prov_dir),"miaaim-registration"+f'-{self.name}'+".sh")
+			sh_name = os.path.join(Path(prov_dir),"miaaim-registration"+f'-{self.name}'+".sh")
 
             # update attributes
-            self.root_folder = root_folder
-            self.processed_dir = processed_dir
-            self.preprocess_dir = preprocess_dir
-            self.docs_dir = docs_dir
-            self.qc_dir = qc_dir
-            self.qc_preprocess_dir = qc_preprocess_dir
-            self.qc_preprocess_name_dir = qc_preprocess_name_dir
-            self.prov_dir = prov_dir
-            self.log_name = log_name
-            self.logger = logger
-            self.sh_name = sh_name
-            self.yaml_name = yaml_name
+			self.root_folder = root_folder
+			self.processed_dir = processed_dir
+			self.preprocess_dir = preprocess_dir
+			self.docs_dir = docs_dir
+			self.qc_dir = qc_dir
+			self.qc_preprocess_dir = qc_preprocess_dir
+			self.qc_preprocess_name_dir = qc_preprocess_name_dir
+			self.prov_dir = prov_dir
+			self.log_name = log_name
+			self.logger = logger
+			self.sh_name = sh_name
+			self.yaml_name = yaml_name
 
 	def Register(self, fixed, moving, p, out_dir=None, fp=None, mp=None, fMask=None, multichannel=True):
 		# log
 		logging.info(f'ELASTIX IMAGE REGISTRATION')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"Register":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}}))
+		self.yaml_log['ProcessingSteps'].append(({"Register":{'fixed':fixed,
+															  'moving':moving,
+															  'out_dir':out_dir,
+															  'p':p,
+															  'fp':fp,
+															  'mp':mp,
+															  'fMask':fMask,
+															  'multichannel':multichannel}}))
 
 		# run elastix registration class
 		self.elastix = ElastixReg()
@@ -566,14 +566,14 @@ class Elastix():
 			p = self.p
 
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}}))
+		self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':fixed,
+															   'moving':moving,
+															   'out_dir':out_dir,
+															   'p':p,
+															   'fp':fp,
+															   'mp':mp,
+															   'fMask':fMask,
+															   'multichannel':multichannel}}))
 
 		# run transformix class
 		self.transformix = Transformix()
@@ -596,14 +596,14 @@ class Elastix():
 			p = self.p
 
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"Invert":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}}))
+		self.yaml_log['ProcessingSteps'].append(({"Invert":{'fixed':fixed,
+															'moving':moving,
+															'out_dir':out_dir,
+															'p':p,
+															'fp':fp,
+															'mp':mp,
+															'fMask':fMask,
+															'multichannel':multichannel}}))
 
 		# run elastix registration class
 		self.inverseElastix = InverseElastixReg()
@@ -613,14 +613,14 @@ class Elastix():
 		# log
 		logging.info(f'APPLYING APPROXIMATE INVERSE TRANSFORMATION')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"InverseTransform":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}}))
+		self.yaml_log['ProcessingSteps'].append(({"InverseTransform":{'fixed':fixed,
+																	  'moving':moving,
+																	  'out_dir':out_dir,
+																	  'p':p,
+																	  'fp':fp,
+																	  'mp':mp,
+																	  'fMask':fMask,
+																	  'multichannel':multichannel}}))
 
 
 		# run elastix registration class
@@ -633,14 +633,14 @@ class Elastix():
 		# log
 		logging.info(f'TRANSFORMIX MASK TRANSFORMER')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"MaskTransform":{'fixed':fixed,
-										'moving':moving,
-										'out_dir':out_dir,
-										'p':p,
-										'fp':fp,
-										'mp':mp,
-										'fMask':fMask,
-										'multichannel':multichannel}}))
+		self.yaml_log['ProcessingSteps'].append(({"MaskTransform":{'fixed':fixed,
+																   'moving':moving,
+																   'out_dir':out_dir,
+																   'p':p,
+																   'fp':fp,
+																   'mp':mp,
+																   'fMask':fMask,
+																   'multichannel':multichannel}}))
 
 
 		# run elastix registration class
@@ -661,38 +661,37 @@ class Elastix():
 	def QCmetrics(self):
 		raise NotImplementedError
 
-    def _exportYAML(self):
-        """Function to export yaml log to file for documentation
-        """
-        logging.info(f'Exporting {self.yaml_name}')
-        # open file and export
-        with open(self.yaml_name, 'w') as outfile:
-            yaml.dump(self.yaml_log, outfile, default_flow_style=False)
+	def _exportYAML(self):
+		"""Function to export yaml log to file for documentation
+		"""
+		logging.info(f'Exporting {self.yaml_name}')
+		# open file and export
+		with open(self.yaml_name, 'w') as outfile:
+			yaml.dump(self.yaml_log, outfile, default_flow_style=False)
 
-    def _exportSH(self):
-        """Function to export sh command to file for documentation
-        """
-        logging.info(f'Exporting {self.sh_name}')
-        # get name of the python path and cli file
-        proc_fname = os.path.join(Path(_parse.__file__).parent,"_cli_elastix.py")
-        # get path to python executable
-        # create shell command script
-        with open (self.sh_name, 'w') as rsh:
-            rsh.write(f'''\
-        #! /bin/bash
-        {sys.executable} {proc_fname} --pars {self.yaml_name}
-        ''')
+	def _exportSH(self):
+		"""Function to export sh command to file for documentation
+		"""
+		logging.info(f'Exporting {self.sh_name}')
+		# get name of the python path and cli file
+		proc_fname = os.path.join(Path(_parse.__file__).parent,"_cli_elastix.py")
+		# get path to python executable
+		# create shell command script
+		with open (self.sh_name, 'w') as rsh:
+			rsh.write(f'''\
+			#! /bin/bash
+			{sys.executable} {proc_fname} --pars {self.yaml_name}''')
 
-    def QC(self):
-        """Function to export QC metrics to file for documentation
-        """
-        # log
-        logging.info("QC: extracting quality control information")
-        # provenance
-        self._exportYAML()
-        self._exportSH()
-        # close the logger
-        self.logger.handlers.clear()
+	def QC(self):
+		"""Function to export QC metrics to file for documentation
+		"""
+		# log
+		logging.info("QC: extracting quality control information")
+		# provenance
+		self._exportYAML()
+		self._exportSH()
+		# close the logger
+		self.logger.handlers.clear()
 
 
 

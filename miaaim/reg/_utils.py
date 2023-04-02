@@ -392,138 +392,138 @@ def ValidateKNNaMIparams(cF,mF,p,outdir=None):
 				break
 
         # get the string after space (exclude parenthesis at end)
-        value = lines.split(" ")[1:][0][:-1]
+		value = lines.split(" ")[1:][0][:-1]
         # check for KNN aMI
-        if "KNNGraphAlphaMutualInformation" in value:
+		if "KNNGraphAlphaMutualInformation" in value:
 
     		# replace compose transforms
-    		par = 'FixedImagePyramid'
+			par = 'FixedImagePyramid'
     		# get line which matches this parameter
-    		lines = [s for s in result if str(par+' ') in s]
+			lines = [s for s in result if str(par+' ') in s]
     		# filter the lines
-    		for l in lines:
+			for l in lines:
     			# extract first word
-    			test = l.split(" ")[0].replace('(',"")
+				test = l.split(" ")[0].replace('(',"")
     			# see if first word is a match
-    			if test == par:
+				if test == par:
     				# set line to be the desired string
-    				lines = l
+					lines = l
     				# break
-    				break
+					break
     		# get the length of the line (number of parameters)
-    		len_values = len(lines.split(" ")[1:])
+			len_values = len(lines.split(" ")[1:])
     		# get the string after space (exclude parenthesis at end)
-    		value = lines.split(" ")[1:][0]
+			value = lines.split(" ")[1:][0]
     		# check to see if number of values equals number of channels
-    		if len_values != cF:
+			if len_values != cF:
     			# set flag to true for this file
-    			flag = True
+				flag = True
     			# create new string by duplicating original value
-    			out = ''
-    			for i in range(cF):
-    				if i == 0:
-    					out += value
-    				else:
-    					out += " " + value
+				out = ''
+				for i in range(cF):
+					if i == 0:
+						out += value
+					else:
+						out += " " + value
     			# raise warning
-    			warnings.warn(f'FixedImagePyramid parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
+				warnings.warn(f'FixedImagePyramid parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
     			# get the actual values for the line
-    			vs_actual = ''
-    			for i in range(len_values):
-    				if i == 0:
-    					vs_actual += value
-    				else:
-    					vs_actual += " " + value
+				vs_actual = ''
+				for i in range(len_values):
+					if i == 0:
+						vs_actual += value
+					else:
+						vs_actual += " " + value
     			# replace the value in the line with new value
-    			newline = lines.replace(vs_actual,out)
+				newline = lines.replace(vs_actual,out)
     			# replace the results with the newline
-    			result_out=list(map(lambda x: x.replace(lines,newline),result_out))
+				result_out=list(map(lambda x: x.replace(lines,newline),result_out))
 
     		# replace compose transforms
-    		par = 'MovingImagePyramid'
+			par = 'MovingImagePyramid'
     		# get line which matches this parameter
-    		lines = [s for s in result if str(par+' ') in s]
+			lines = [s for s in result if str(par+' ') in s]
     		# filter the lines
-    		for l in lines:
+			for l in lines:
     			# extract first word
-    			test = l.split(" ")[0].replace('(',"")
+				test = l.split(" ")[0].replace('(',"")
     			# see if first word is a match
-    			if test == par:
+				if test == par:
     				# set line to be the desired string
-    				lines = l
+					lines = l
     				# break
-    				break
+					break
     		# get the length of the line (number of parameters)
-    		len_values = len(lines.split(" ")[1:])
+			len_values = len(lines.split(" ")[1:])
     		# get the string after space (exclude parenthesis at end)
-    		value = lines.split(" ")[1:][0]
+			value = lines.split(" ")[1:][0]
     		# check to see if number of values equals number of channels
-    		if len_values != mF:
+			if len_values != mF:
     			# set flag to true for this file
-    			flag = True
+				flag = True
     			# create new string by duplicating original value
-    			out = ''
-    			for i in range(mF):
-    				if i == 0:
-    					out += value
-    				else:
-    					out += " " + value
+				out = ''
+				for i in range(mF):
+					if i == 0:
+						out += value
+					else:
+						out += " " + value
     			# raise warning
-    			warnings.warn(f'MovingImagePyramid parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
+				warnings.warn(f'MovingImagePyramid parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
     			# get the actual values for the line
-    			vs_actual = ''
-    			for i in range(len_values):
-    				if i == 0:
-    					vs_actual += value
-    				else:
-    					vs_actual += " " + value
+				vs_actual = ''
+				for i in range(len_values):
+					if i == 0:
+						vs_actual += value
+					else:
+						vs_actual += " " + value
     			# replace the value in the line with new value
-    			newline = lines.replace(vs_actual,out)
+				newline = lines.replace(vs_actual,out)
     			# replace the results with the newline
-    			result_out=list(map(lambda x: x.replace(lines,newline),result_out))
+				result_out=list(map(lambda x: x.replace(lines,newline),result_out))
 
     		# replace compose transforms
-    		par = 'Interpolator'
+			par = 'Interpolator'
     		# get line which matches this parameter
-    		lines = [s for s in result if str(par+' ') in s]
+			lines = [s for s in result if str(par+' ') in s]
     		# filter the lines
-    		for l in lines:
+			for l in lines:
     			# extract first word
-    			test = l.split(" ")[0].replace('(',"")
+				test = l.split(" ")[0].replace('(',"")
     			# see if first word is a match
-    			if test == par:
+				if test == par:
     				# set line to be the desired string
-    				lines = l
+					lines = l
     				# break
-    				break
+					break
     		# get the length of the line (number of parameters)
-    		len_values = len(lines.split(" ")[1:])
+			len_values = len(lines.split(" ")[1:])
     		# get the string after space (exclude parenthesis at end)
-    		value = lines.split(" ")[1:][0]
+			value = lines.split(" ")[1:][0]
     		# check to see if number of values equals number of channels
-    		if len_values != mF:
+			if len_values != mF:
     			# set flag to true for this file
-    			flag = True
+				flag = True
     			# create new string by duplicating original value
-    			out = ''
-    			for i in range(mF):
-    				if i == 0:
-    					out += value
-    				else:
-    					out += " " + value
+				out = ''
+				for i in range(mF):
+					if i == 0:
+						out += value
+					else:
+						out += " " + value
     			# raise warning
-    			warnings.warn(f'Interpolator parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
+				warnings.warn(f'Interpolator parameters {lines} do not match fixed image dimensions. Automatically updating to {out}')
     			# get the actual values for the line
-    			vs_actual = ''
-    			for i in range(len_values):
-    				if i == 0:
-    					vs_actual += value
-    				else:
-    					vs_actual += " " + value
+				vs_actual = ''
+				for i in range(len_values):
+					if i == 0:
+						vs_actual += value
+					else:
+						vs_actual += " " + value
     			# replace the value in the line with new value
-    			newline = lines.replace(vs_actual,out)
+				newline = lines.replace(vs_actual,out)
     			# replace the results with the newline
-    			result_out=list(map(lambda x: x.replace(lines,newline),result_out))
+				result_out=list(map(lambda x: x.replace(lines,newline),result_out))
 
 		# check for flag
 		if flag:

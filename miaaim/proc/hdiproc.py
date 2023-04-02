@@ -1817,7 +1817,7 @@ class IntraModalityDataset:
                     # convert to array
                     hdi_imp.hdi.data.processed_mask = hdi_imp.hdi.data.processed_mask.toarray()
                 # Export the original image
-                Export1(hdi_imp.hdi.data.processed_mask.toarray(), im_name, padding, target_size)
+                Export1(hdi_imp.hdi.data.processed_mask, im_name, padding, target_size)
 
             connect_dict.update({f: im_name})
 
