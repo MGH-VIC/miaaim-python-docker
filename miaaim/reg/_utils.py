@@ -322,8 +322,8 @@ def AlterInverseTransform(input):
 
 
 
-input = Path("/Users/joshuahess/Desktop/aMI_affine.txt")
-outdir = None
+# input = Path("/Users/joshuahess/Desktop/aMI_affine.txt")
+# outdir = None
 
 
 def ValidateKNNaMIparams(cF,mF,p,outdir=None):
@@ -538,6 +538,70 @@ def ValidateKNNaMIparams(cF,mF,p,outdir=None):
 			out_files.append(input)
 	# return the name of all files
 	return out_files
+
+
+
+# testing the points formatter
+# txt_file = "/Users/joshuahess/Desktop/POINTS.txt"
+# FormatFijiLandmarkPoints(txt_file)
+
+
+def FormatFijiLandmarkPoints(txt_file, selection_type):
+    """This function will take the text point selection file that you export from
+    using control+m in fiji (ImageJ) to the correct text file format to use with
+    elastix image registration
+
+    selection_type must be the string 'index' or 'points'"""
+    
+    # create pathlib object from text file
+    txt_file = Path(txt_file)
+    #Get the image folder name
+    parent=Path(txt_file).parent    
+    #Remove the file extension
+    outname=parent.joinpath(txt_file.stem+"-validated.txt")
+    
+    #Read input text file
+    data = pd.read_csv(txt_file, sep='\t', names=["X","Y"])
+
+    #Create a new text file
+    txt_file = open(outname,"w+")
+    #Create first string to write to your file
+    str_list = [str(selection_type),str(data.shape[0])]
+    txt_file.writelines(i + '\n' for i in str_list)
+    #Close and save the txt file
+    txt_file.close()
+    
+    #Get only the data we need for the text file
+    point_tab = data[['X','Y']]
+    #Now append the data table to the txt file
+    point_tab.to_csv(outname, header=False, index=False, sep=' ', mode='a')
+    
+    # return the new name
+    return outname
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

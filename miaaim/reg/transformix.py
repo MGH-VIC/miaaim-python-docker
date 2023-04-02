@@ -369,7 +369,7 @@ def MultiTransformix(in_im, out_dir, tps):
 
 #Create class structure for transformix implementation
 class Transformix():
-	"""Python implementation of Transformix with automated image pre-processing.
+    """Python implementation of Transformix with automated image pre-processing.
 
 	Parameters
 	----------
@@ -414,35 +414,45 @@ class Transformix():
 				same value as the amount of padding applied to
 				the cropped region's corresponding fixed image that was used for
 				registration.
-	"""
-
-	def __init__(self, in_im, out_dir, tps, target_size = None, pad = None, trim = None, crops = None, out_ext = ".nii"):
-
-		#Create pathlib objects and set class parameters
-		self.in_im = Path(in_im)
-		self.in_channels = []
-		self.out_channels = []
-		self.multichannel = None
-		self.out_dir = Path(out_dir)
-		self.tps = [Path(t) for t in tps]
-		self.command = "transformix"
-		self.intermediate = False
-		self.out_ext = out_ext
-		self.target_size = target_size
-		self.pad = pad
-		self.trim = trim
-		self.crops = crops
+    """
+                
+    def __init__(
+            self, 
+            in_im, 
+            out_dir, 
+            tps, 
+            target_size = None, 
+            pad = None, 
+            trim = None, 
+            crops = None, 
+            out_ext = ".nii"):
+        
+        #Create pathlib objects and set class parameters
+        self.in_im = Path(in_im)
+        self.in_channels = []
+        self.out_channels = []
+        self.multichannel = None
+        self.out_dir = Path(out_dir)
+        self.tps = [Path(t) for t in tps]
+        self.command = "transformix"
+        self.intermediate = False
+        self.out_ext = out_ext
+        self.target_size = target_size
+        self.pad = pad
+        self.trim = trim
+        self.crops = crops
+        self.out_name = None
 		# Check for input list or none
-		if self.target_size!=None:
+        if self.target_size!=None:
 			# convert it to tuple from list (command line parser)
-			self.target_size = tuple(self.target_size)
+            self.target_size = tuple(self.target_size)
 		# Check for input list or none
-		if self.pad!=None:
+        if self.pad!=None:
 			# convert it to tuple from list (command line parser)
-			self.pad = tuple(self.pad)
+            self.pad = tuple(self.pad)
 
 		#Load images
-		niiIn = _import.HDIreader(
+        niiIn = _import.HDIreader(
 		    path_to_data=in_im,
 		    path_to_markers=None,
 		    flatten=False,
@@ -451,204 +461,203 @@ class Transformix():
 		    save_mem=False
 		)
 		# update file information
-		self.baseName = niiIn.hdi.data.filename.stem.replace(".ome","")
-		self.ext = "".join(niiIn.hdi.data.filename.suffixes)
+        self.baseName = niiIn.hdi.data.filename.stem.replace(".ome","")
+        self.ext = "".join(niiIn.hdi.data.filename.suffixes)
 
 		# Check for input extension or none
-		if self.out_ext==None:
+        if self.out_ext==None:
 			# convert it to be whatever extension the input image contains as default
-			self.out_ext = self.ext
+            self.out_ext = self.ext
 			# make sure that the export type is not .imzML for now...
-			if self.out_ext==".imzML":
+            if self.out_ext==".imzML":
 				# change to nifti
-				self.out_ext=".nii"
+                self.out_ext=".nii"
 
 		# check for number of channels in the image by accessing the class
-		if niiIn.hdi.data.num_channels >= 2:
+        if niiIn.hdi.data.num_channels >= 2:
 			# Update multichannel class option
-			self.multichannel = True
+            self.multichannel = True
 		# otherwise this is a single channel image
-		else:
+        else:
 			# multichannel is false
-			self.multichannel = False
+            self.multichannel = False
 
 	    #Check to see if there is single channel input (grayscale)
-		if not self.multichannel:
+        if not self.multichannel:
 			# run single channel registration on array
-			self._singlechannelTransformixArray(niiIn)
+            self._singlechannelTransformixArray(niiIn)
 
 		# Otherwise there is multichannel input. here we run multichannel registration
 		# and all operations for preprocessing are performed on a per slice basis to
 		# save disk space (dont have to export the full z stack at once). For now
 		# all processing steps are tailored for nifti formats. In the future this
 		# should easily be changed to allow for any data format
-		else:
+        else:
 			# print update
-			print('Detected multichannel input')
+            print('Detected multichannel input')
 			# Check to see if cropping the resulting image
-			if self.crops==None:
+            if self.crops==None:
 				# check for raster data
-				if niiIn.hdi.data.hdi_type == 'raster':
+                if niiIn.hdi.data.hdi_type == 'raster':
 					# raster transformix
-					self._multichannelTransformixRaster(niiIn)
+                    self._multichannelTransformixRaster(niiIn)
 				# check for image data type
-				else:
+                else:
 					# run multichannel transformix with the array type
-					self._multichannelTransformixArray(niiIn)
+                    self._multichannelTransformixArray(niiIn)
 
 			# !!!!!!!!!!!!!!!
 			# Cropping is true
 			# !!!!!!!!!!!!!!!
-			else:
+            else:
 				#Read the image
-				niiIn = niiIn.get_fdata()
+                niiIn = niiIn.get_fdata()
 
 				#Create a temporary outer directory
-				with tempfile.TemporaryDirectory(dir=self.out_dir) as tmphomedir:
+                with tempfile.TemporaryDirectory(dir=self.out_dir) as tmphomedir:
 
 					#Create a dictionary to store the temporary folders in
-					tmpfolds = {}
+                    tmpfolds = {}
 					#Create a dictionary to store list of channels in for each roi
-					roi_channels = {}
+                    roi_channels = {}
 					#Iterate through each crop and create a temporary directory for it
-					for roi, pars in crops.items():
+                    for roi, pars in crops.items():
 						#Create a temporary directory and reserve the roi name from the crops input
-						tmpfolds.update({roi: tempfile.mkdtemp(dir = self.out_dir)})
+                        tmpfolds.update({roi: tempfile.mkdtemp(dir = self.out_dir)})
 						#Update the channels dictionary to be empty lists
-						roi_channels.update({roi:[]})
+                        roi_channels.update({roi:[]})
 
 					#Print update on array shape
-					print('Image has ' +str(niiIn.shape[2])+' channels')
+                    print('Image has ' +str(niiIn.shape[2])+' channels')
 
 					#Iterate through each channel in the data
-					for i in range(niiIn.shape[2]):
+                    for i in range(niiIn.shape[2]):
 						#Print update
-						print('Working on slice '+str(i))
+                        print('Working on slice '+str(i))
 						#print("Multichannel crop is true")
 						#print('Shape of NiiIn is' +str(niiIn.shape[2]))
 						#Update the list of names for image channels
 						#self.in_channels.append(im_name)
 
 						#create a temporary directory using the context manager for channel-wise images
-						with tempfile.TemporaryDirectory(dir=tmphomedir) as tmpdirname:
+                        with tempfile.TemporaryDirectory(dir=tmphomedir) as tmpdirname:
 							#Create a name for a temporary image
-							im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+self.in_im.suffix))
+                            im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+self.in_im.suffix))
 							#Check to see if the path exists
-							if not im_name.is_file():
-
+                            if not im_name.is_file():
 								#Check to see if there is a target size for the image
-								if target_size != None:
+                                if target_size != None:
 									#print("Got the resize")
 									#Create a nifti image from this slice
-									nii_im = nib.Nifti1Image(resize(niiIn[:,:,i],target_size), affine=np.eye(4))
+                                    nii_im = nib.Nifti1Image(resize(niiIn[:,:,i],target_size), affine=np.eye(4))
 									#print(" resized")
 								#No resize
-								else:
+                                else:
 									#Leave the image unchanged
-									nii_im = nib.Nifti1Image(niiIn[:,:,i], affine=np.eye(4))
+                                    nii_im = nib.Nifti1Image(niiIn[:,:,i], affine=np.eye(4))
 								#Save the nifti image
-								nib.save(nii_im,str(im_name))
+                                nib.save(nii_im,str(im_name))
 								#print("saved "+ str(im_name))
 								#Remove the nifti slice to clear memory
-								nii_im = None
+                                nii_im = None
 
 							#add transform -- check for list size
-							if len(self.tps) > 1:
+                            if len(self.tps) > 1:
 								#print('GOt the multi tp input')
 								#Run the composition function for transformix
-								res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
-
-							else:
+                                res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
+                                
+                            else:
 
 								#Create a temporary command to be sent to the shell
-								tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
+                                tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
 								#Add full tissue transform paramaeters
-								tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
+                                tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
 								#Send the command to the shell
-								RunTransformix(tmp_command)
+                                RunTransformix(tmp_command)
 
 								#Get a temporary result name for the output of transformix (assumes nifti for now)
-								res_name = Path(os.path.join(tmpdirname,"result"+self.in_im.suffix))
+                                res_name = Path(os.path.join(tmpdirname,"result"+self.in_im.suffix))
 
 							#Load the resulting transformed image
-							niiResult = nib.load(str(res_name)).get_fdata()
+                            niiResult = nib.load(str(res_name)).get_fdata()
 
 							#Iterate through each of the crops
-							for roi, pars in crops.items():
+                            for roi, pars in crops.items():
 
 								#Create a temporary directory to store the
-								with tempfile.TemporaryDirectory(dir=tmpdirname) as roitmp:
+                                with tempfile.TemporaryDirectory(dir=tmpdirname) as roitmp:
 									#Create a temporary name
-									tmproiname = Path(os.path.join(roitmp,str(roi)+str(i)+self.in_im.suffix))
+                                    tmproiname = Path(os.path.join(roitmp,str(roi)+str(i)+self.in_im.suffix))
 									#Extract a temporary crop for this region
-									tmpcrop = ExtractROIcrop(coords_csv = pars['coords_csv'],full_img = niiResult, target_size = pars['target_size'], correction = pars['correction'])
+                                    tmpcrop = ExtractROIcrop(coords_csv = pars['coords_csv'],full_img = niiResult, target_size = pars['target_size'], correction = pars['correction'])
 									#Save this temporary crop to the roi temp directory
-									nib.save(tmpcrop,str(tmproiname))
+                                    nib.save(tmpcrop,str(tmproiname))
 
 									#add transform -- check for list size
-									if len(pars['tps']) > 1:
+                                    if len(pars['tps']) > 1:
 										#Run the composition function for transformix
-										roires_name = MultiTransformix(in_im = tmproiname, out_dir = roitmp, tps = pars['tps'])
-
-									else:
+                                        roires_name = MultiTransformix(in_im = tmproiname, out_dir = roitmp, tps = pars['tps'])
+                                        
+                                    else:
 
 										#Create a temporary command to be sent to the shell -- output directory in the tmp folder created previously
-										roi_command = self.command + ' -in ' + str(tmproiname) + ' -out ' + str(roitmp)
+                                        roi_command = self.command + ' -in ' + str(tmproiname) + ' -out ' + str(roitmp)
 										#Add these transform parameters for this roi
-										roi_command = roi_command + ' -tp ' + str(Path(pars['tp']))
+                                        roi_command = roi_command + ' -tp ' + str(Path(pars['tp']))
 										#Send the command to the shell
-										RunTransformix(roi_command)
+                                        RunTransformix(roi_command)
 
 										#Get a temporary result name for the output of transformix (assumes nifti for now)
-										roires_name = Path(os.path.join(roitmp,"result"+self.in_im.suffix))
+                                        roires_name = Path(os.path.join(roitmp,"result"+self.in_im.suffix))
 
 									#Create a new name for the roi result
-									roinew_name = Path(os.path.join(tmpfolds[roi],str(roi)+'_result'+str(i)+self.in_im.suffix))
+                                    roinew_name = Path(os.path.join(tmpfolds[roi],str(roi)+'_result'+str(i)+self.in_im.suffix))
 									#Rename the produced file :)
-									roires_name.rename(roinew_name)
+                                    roires_name.rename(roinew_name)
 									#Update the list of output channel names
-									roi_channels[str(roi)].append(str(roinew_name))
+                                    roi_channels[str(roi)].append(str(roinew_name))
 
 									#Clear the nifti objects
-									tmpcrop = None
+                                    tmpcrop = None
 
 							#Clear the nifti full tissue result
-							niiResult = None
+                            niiResult = None
 
 
 					#Access each temporary roi results folder and concatenate the results
-					for roi, pars in crops.items():
+                    for roi, pars in crops.items():
 						#Concatenate the output channels into a single result file in the output directory
-						roi_results = nib.concat_images([str(i) for i in roi_channels[str(roi)]])
+                        roi_results = nib.concat_images([str(i) for i in roi_channels[str(roi)]])
 						#Check to see if there is fixed image padding
-						if pars['fixed_pad'] != None:
+                        if pars['fixed_pad'] != None:
 							#Get the value of the padding
-							pads = pars['fixed_pad']
+                            pads = pars['fixed_pad']
 							#Extract only the needed region
-							roi_results = roi_results.get_fdata()[pads:-pads,pads:-pads,:]
+                            roi_results = roi_results.get_fdata()[pads:-pads,pads:-pads,:]
 						#create a filename for the full nifti results
-						roi_name = Path(os.path.join(str(self.out_dir),str(roi)+"_result"+self.out_ext))
+                        roi_name = Path(os.path.join(str(self.out_dir),str(roi)+"_result"+self.out_ext))
 						# use the exported from hdiutils
-						_export.HDIexporter(full_result.get_fdata().transpose(1,0,2),roi_name)
+                        _export.HDIexporter(full_result.get_fdata().transpose(1,0,2),roi_name)
 
 						#Remove roi results from memory
-						roi_results = None
+                        roi_results = None
 
 						#Now delete the temporary folder stored for the single channel ROI results
-						shutil.rmtree(tmpfolds[roi], ignore_errors=True)
+                        shutil.rmtree(tmpfolds[roi], ignore_errors=True)
 
 		# remove the temporary image if there was a nifti-1 intermediate
-		if self.intermediate:
+        if self.intermediate:
 			# remove using pathlib
-			self.in_im.unlink()
+            self.in_im.unlink()
 		#Print update
-		print("Finished")
+        print("Finished")
 
 		#Return the command
 		#return self.command
-
-	def _singlechannelTransformixArray(self, niiIn):
-		"""Helper function for single channel transformix call on array data.
+        
+    def _singlechannelTransformixArray(self, niiIn):
+        """Helper function for single channel transformix call on array data.
 
 		Parameters
 		----------
@@ -665,67 +674,69 @@ class Transformix():
 		# here we supply all preprocessing commands that were used to preprocess or morph
 		# the array size of the input image through the hdiprep workflow. Transformix
 		# must be run on images with the same size as the elastix registration
-		if ((self.out_ext!=".nii") or (self.target_size!=None) or (self.pad!=None)):
+        if ((self.out_ext!=".nii") or (self.target_size!=None) or (self.pad!=None)):
 			# get the shape of the image
-			shp = len(niiIn.hdi.data.image_shape)
+            shp = len(niiIn.hdi.data.image_shape)
 			# create new name for the temporary image
-			tmp_nm = os.path.join(out_dir, next(tempfile._get_candidate_names())+".nii")
+            tmp_nm = os.path.join(self.out_dir, next(tempfile._get_candidate_names())+".nii")
 			# export nifti intermediate
-			print('Creating nifti-1 intermediate for registration')
+            print('Creating nifti-1 intermediate for registration')
 			# check for padding
-			if self.pad!=None:
+            if self.pad!=None:
 				# pad the single-channel
-				niiIn.hdi.data.image = np.pad(niiIn.hdi.data.image,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
+                niiIn.hdi.data.image = np.pad(niiIn.hdi.data.image,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
 			# check for image resizing
-			if (self.target_size != None) and (self.crops==None):
+            if (self.target_size != None) and (self.crops==None):
 				# transform the image
-				niiIn.hdi.data.image = resize(niiIn.hdi.data.image,self.target_size)
+                niiIn.hdi.data.image = resize(niiIn.hdi.data.image,self.target_size)
 
 			# Create nifti oject -- transpose axes because of the transformation!
-			nii_im = nib.Nifti1Image(niiIn.hdi.data.image.T, affine=np.eye(4))
+            nii_im = nib.Nifti1Image(niiIn.hdi.data.image.T, affine=np.eye(4))
 			#Save the nifti image
-			nib.save(nii_im,str(tmp_nm))
+            nib.save(nii_im,str(tmp_nm))
 			# remove the nifit memory
-			nii_im = None
+            nii_im = None
 			# update the image name
-			print('Using nifti-1 intermediate for registration')
+            print('Using nifti-1 intermediate for registration')
 			# update the input image
-			self.in_im = Path(tmp_nm)
+            self.in_im = Path(tmp_nm)
 			# update the intermediate flag
-			self.intermediate = True
+            self.intermediate = True
 			#Remove loaded image to clear memory
-			niiIn = None
+            niiIn = None
 
 		#Print update
-		print('Detected single channel input images...')
+        print('Detected single channel input images...')
 		#Update the fixed channels
-		self.in_channels.append(self.in_im)
+        self.in_channels.append(self.in_im)
 
 		#add transform -- check for list size
-		if len(self.tps) > 1:
+        if len(self.tps) > 1:
 			#Run the composition function for transformix
-			res_name = MultiTransformix(in_im = self.in_im, out_dir = self.out_dir, tps = self.tps)
+            res_name = MultiTransformix(in_im = self.in_im, out_dir = self.out_dir, tps = self.tps)
 
 		#Otherwise only use the first transform parameter
-		else:
+        else:
 			#Updatethe command with the single channel path alone
-			self.command = self.command + ' -in ' + str(self.in_im)
+            self.command = self.command + ' -in ' + str(self.in_im)
 			#use the first transform parameter file
-			self.command = self.command + ' -tp ' + str(self.tps[0])
+            self.command = self.command + ' -tp ' + str(self.tps[0])
 			#Update the command with the output directory
-			self.command = self.command + ' -out ' + str(self.out_dir)
+            self.command = self.command + ' -out ' + str(self.out_dir)
 			#Run single channel transformix without temporary directories
-			RunTransformix(self.command)
+            RunTransformix(self.command)
 			#Get a result name for the output of transformix (assumes nifti for now)
-			res_name = Path(os.path.join(self.out_dir,"result"+self.in_im.suffix))
+            res_name = Path(os.path.join(self.out_dir,"result"+self.in_im.suffix))
 
 		#Create a new name
-		new_name = Path(os.path.join(self.out_dir,self.baseName+'_result'+self.out_ext))
+        new_name = Path(os.path.join(self.out_dir,self.baseName+'_result'+self.out_ext))
+        # add the new name to the class object
+        self.out_name = new_name
 
 		# check if the output format needs to be switched -- set by the user
-		if (self.out_ext!=".nii") or (self.trim!=None):
+        if (self.out_ext!=".nii") or (self.trim!=None):
 			# use HDIreader for now to parse image and exporter to export
-			niiIn = _import.HDIreader(
+            niiIn = _import.HDIreader(
 			    path_to_data=self.in_im,
 			    path_to_markers=None,
 			    flatten=False,
@@ -734,113 +745,17 @@ class Transformix():
 			    save_mem=False
 			)
 			# check the trim
-			if self.trim!=None:
+            if self.trim!=None:
 				# trim the image borders
-				niiIn.hdi.data.image = niiIn.hdi.data.image[self.trim:-self.trim,self.trim:-self.trim]
+                niiIn.hdi.data.image = niiIn.hdi.data.image[self.trim:-self.trim,self.trim:-self.trim]
 			# export new data
-			_export.HDIexporter(niiIn.hdi.data.image,new_name)
-		else:
+            _export.HDIexporter(niiIn.hdi.data.image,new_name)
+        else:
 			# simply rename the file that is already in the nifti format
-			res_name.rename(new_name)
-
-	def _multichannelTransformixArray(self, niiIn):
-		"""Helper function for running multichannel transformix on array data.
-
-		Parameters
-		----------
-		niiIn: class HDIreader
-			Input image that is read initially with the hdiutils python package.
-			The details of the image are stored inside of this class object,
-			and the ``Transformix`` class will access those to automatically
-			process the image.
-		"""
-		# create a temporary directory using the context manager for channel-wise images
-		with tempfile.TemporaryDirectory(dir=self.out_dir) as tmpdirname:
-			# Print update
-			print('Created temporary directory', tmpdirname)
-			# Iterate through the channels
-			for i in tqdm(range(niiIn.hdi.data.num_channels)):
-				# Print update
-				# print('Working on slice '+str(i))
-				# Create a name for a temporary image
-				im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+".nii"))
-				# Update the list of names for image channels
-				self.in_channels.append(im_name)
-				# set a temporary channel to work with throughout the data prep stage
-				slice_in = niiIn.hdi.data.image[:,:,i]
-
-				# Check to see if the path exists
-				if not im_name.is_file():
-					# check for padding
-					if self.pad!=None:
-						# pad the single-channel
-						slice_in = np.pad(slice_in,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
-					# Check to see if there is a target size for the image
-					if self.target_size!=None:
-						# Resize the image
-						slice_in = resize(slice_in,self.target_size)
-
-					# Create a nifti image from this slice
-					nii_im = nib.Nifti1Image(slice_in.T, affine=np.eye(4))
-					# remove memory
-					slice_in = None
-					#Save the nifti image
-					nib.save(nii_im,str(im_name))
-					#Remove the nifti slice to clear memory
-					nii_im = None
-
-				#add transform -- check for list size
-				if len(self.tps) > 1:
-					#Run the composition function for transformix
-					res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
-
-				else:
-					#Create a temporary command to be sent to the shell
-					tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
-					#Add full tissue transform paramaeters
-					tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
-					#Send the command to the shell
-					RunTransformix(tmp_command)
-
-					#Get a temporary result name for the output of transformix (assumes nifti for now)
-					res_name = Path(os.path.join(tmpdirname,"result"+".nii"))
-
-				# remove the temporary image if there was a nifti-1 intermediate
-				im_name.unlink()
-
-				#Create a new name
-				new_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+'_result'+".nii"))
-				#Get the resulting image to rename (so we don't overwrite results)
-				res_name.rename(new_name)
-				#Update the list of output channel names
-				self.out_channels.append(new_name)
-
-			#Remove loaded image to clear memory
-			niiIn = None
-			#Concatenate the output channels into a single result file in the output directory
-			full_result = nib.concat_images([str(i) for i in self.out_channels])
-			#create a filename for the full nifti results
-			full_name = Path(os.path.join(self.out_dir,self.baseName+"_result"+self.out_ext))
-
-			# check if the output format needs to be switched -- set by the user
-			if (self.out_ext!=".nii") or (self.trim!=None):
-				# check the trim
-				if self.trim!=None:
-					# trim the image borders
-					full_result = full_result.get_fdata()[self.trim:-self.trim,self.trim:-self.trim,:]
-					# export new data
-					_export.HDIexporter(full_result.transpose(1,0,2),full_name)
-				else:
-					# export the non trimmed image
-					_export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
-			else:
-				# export new data using the aggregated nifti objects
-				# doesnt need to be formally read in because it is memory
-				# mapped to the full_result object
-				_export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
-
-	def _multichannelTransformixRaster(self, niiIn):
-		"""Helper function for running multichannel transformix on raster data.
+            res_name.rename(new_name)
+            
+    def _multichannelTransformixArray(self, niiIn):
+        """Helper function for running multichannel transformix on array data.
 
 		Parameters
 		----------
@@ -851,89 +766,190 @@ class Transformix():
 			process the image.
 		"""
 		# create a temporary directory using the context manager for channel-wise images
-		with tempfile.TemporaryDirectory(dir=self.out_dir) as tmpdirname:
+        with tempfile.TemporaryDirectory(dir=self.out_dir) as tmpdirname:
 			# Print update
-			print('Created temporary directory', tmpdirname)
+            print('Created temporary directory', tmpdirname)
 			# Iterate through the channels
-			for i in tqdm(range(niiIn.hdi.data.num_channels)):
+            for i in tqdm(range(niiIn.hdi.data.num_channels)):
 				# Print update
 				# print('Working on slice '+str(i))
 				# Create a name for a temporary image
-				im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+".nii"))
+                im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+".nii"))
 				# Update the list of names for image channels
-				self.in_channels.append(im_name)
+                self.in_channels.append(im_name)
 				# set a temporary channel to work with throughout the data prep stage
-				slice_in = niiIn.hdi.CreateSingleChannelArray(i)
+                slice_in = niiIn.hdi.data.image[:,:,i]
 
 				# Check to see if the path exists
-				if not im_name.is_file():
+                if not im_name.is_file():
 					# check for padding
-					if self.pad!=None:
+                    if self.pad!=None:
 						# pad the single-channel
-						slice_in = np.pad(slice_in,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
+                        slice_in = np.pad(slice_in,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
 					# Check to see if there is a target size for the image
-					if self.target_size!=None:
+                    if self.target_size!=None:
 						# Resize the image
-						slice_in = resize(slice_in,self.target_size)
+                        slice_in = resize(slice_in,self.target_size)
 
 					# Create a nifti image from this slice
-					nii_im = nib.Nifti1Image(slice_in.T, affine=np.eye(4))
+                    nii_im = nib.Nifti1Image(slice_in.T, affine=np.eye(4))
 					# remove memory
-					slice_in = None
+                    slice_in = None
 					#Save the nifti image
-					nib.save(nii_im,str(im_name))
+                    nib.save(nii_im,str(im_name))
 					#Remove the nifti slice to clear memory
-					nii_im = None
+                    nii_im = None
 
 				#add transform -- check for list size
-				if len(self.tps) > 1:
+                if len(self.tps) > 1:
 					#Run the composition function for transformix
-					res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
-
-				else:
+                    res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
+                    
+                else:
 					#Create a temporary command to be sent to the shell
-					tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
+                    tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
 					#Add full tissue transform paramaeters
-					tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
+                    tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
 					#Send the command to the shell
-					RunTransformix(tmp_command)
+                    RunTransformix(tmp_command)
 
 					#Get a temporary result name for the output of transformix (assumes nifti for now)
-					res_name = Path(os.path.join(tmpdirname,"result"+".nii"))
+                    res_name = Path(os.path.join(tmpdirname,"result"+".nii"))
 
 				# remove the temporary image if there was a nifti-1 intermediate
-				im_name.unlink()
+                im_name.unlink()
 
 				#Create a new name
-				new_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+'_result'+".nii"))
+                new_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+'_result'+".nii"))
 				#Get the resulting image to rename (so we don't overwrite results)
-				res_name.rename(new_name)
+                res_name.rename(new_name)
 				#Update the list of output channel names
-				self.out_channels.append(new_name)
+                self.out_channels.append(new_name)
 
 			#Remove loaded image to clear memory
-			niiIn = None
+            niiIn = None
 			#Concatenate the output channels into a single result file in the output directory
-			full_result = nib.concat_images([str(i) for i in self.out_channels])
+            full_result = nib.concat_images([str(i) for i in self.out_channels])
 			#create a filename for the full nifti results
-			full_name = Path(os.path.join(self.out_dir,self.baseName+"_result"+self.out_ext))
+            full_name = Path(os.path.join(self.out_dir,self.baseName+"_result"+self.out_ext))
+            # add the new name to the class object
+            self.out_name = full_name
 
 			# check if the output format needs to be switched -- set by the user
-			if (self.out_ext!=".nii") or (self.trim!=None):
+            if (self.out_ext!=".nii") or (self.trim!=None):
 				# check the trim
-				if self.trim!=None:
+                if self.trim!=None:
 					# trim the image borders
-					full_result = full_result.get_fdata()[self.trim:-self.trim,self.trim:-self.trim,:]
+                    full_result = full_result.get_fdata()[self.trim:-self.trim,self.trim:-self.trim,:]
 					# export new data
-					_export.HDIexporter(full_result.transpose(1,0,2),full_name)
-				else:
+                    _export.HDIexporter(full_result.transpose(1,0,2),full_name)
+                else:
 					# export the non trimmed image
-					_export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
-			else:
+                    _export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
+                    
+            else:
 				# export new data using the aggregated nifti objects
 				# doesnt need to be formally read in because it is memory
 				# mapped to the full_result object
-				_export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
+                _export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
+                
+    def _multichannelTransformixRaster(self, niiIn):
+        """Helper function for running multichannel transformix on raster data.
+
+		Parameters
+		----------
+		niiIn: class HDIreader
+			Input image that is read initially with the hdiutils python package.
+			The details of the image are stored inside of this class object,
+			and the ``Transformix`` class will access those to automatically
+			process the image.
+		"""
+		# create a temporary directory using the context manager for channel-wise images
+        with tempfile.TemporaryDirectory(dir=self.out_dir) as tmpdirname:
+			# Print update
+            print('Created temporary directory', tmpdirname)
+			# Iterate through the channels
+            for i in tqdm(range(niiIn.hdi.data.num_channels)):
+				# Print update
+				# print('Working on slice '+str(i))
+				# Create a name for a temporary image
+                im_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+".nii"))
+				# Update the list of names for image channels
+                self.in_channels.append(im_name)
+				# set a temporary channel to work with throughout the data prep stage
+                slice_in = niiIn.hdi.CreateSingleChannelArray(i)
+
+				# Check to see if the path exists
+                if not im_name.is_file():
+					# check for padding
+                    if self.pad!=None:
+						# pad the single-channel
+                        slice_in = np.pad(slice_in,[(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])],mode='constant')
+					# Check to see if there is a target size for the image
+                    if self.target_size!=None:
+						# Resize the image
+                        slice_in = resize(slice_in,self.target_size)
+
+					# Create a nifti image from this slice
+                    nii_im = nib.Nifti1Image(slice_in.T, affine=np.eye(4))
+					# remove memory
+                    slice_in = None
+					#Save the nifti image
+                    nib.save(nii_im,str(im_name))
+					#Remove the nifti slice to clear memory
+                    nii_im = None
+
+				#add transform -- check for list size
+                if len(self.tps) > 1:
+					#Run the composition function for transformix
+                    res_name = MultiTransformix(in_im = im_name, out_dir = tmpdirname, tps = self.tps)
+                    
+                else:
+					#Create a temporary command to be sent to the shell
+                    tmp_command = self.command + ' -in ' + str(im_name) + ' -out ' + str(tmpdirname)
+					#Add full tissue transform paramaeters
+                    tmp_command = tmp_command + ' -tp ' + str(self.tps[0])
+					#Send the command to the shell
+                    RunTransformix(tmp_command)
+
+					#Get a temporary result name for the output of transformix (assumes nifti for now)
+                    res_name = Path(os.path.join(tmpdirname,"result"+".nii"))
+
+				# remove the temporary image if there was a nifti-1 intermediate
+                im_name.unlink()
+
+				#Create a new name
+                new_name = Path(os.path.join(tmpdirname,self.in_im.stem+str(i)+'_result'+".nii"))
+				#Get the resulting image to rename (so we don't overwrite results)
+                res_name.rename(new_name)
+				#Update the list of output channel names
+                self.out_channels.append(new_name)
+
+			#Remove loaded image to clear memory
+            niiIn = None
+			#Concatenate the output channels into a single result file in the output directory
+            full_result = nib.concat_images([str(i) for i in self.out_channels])
+			#create a filename for the full nifti results
+            full_name = Path(os.path.join(self.out_dir,self.baseName+"_result"+self.out_ext))
+            # add the new name to the class object
+            self.out_name = full_name
+
+			# check if the output format needs to be switched -- set by the user
+            if (self.out_ext!=".nii") or (self.trim!=None):
+				# check the trim
+                if self.trim!=None:
+					# trim the image borders
+                    full_result = full_result.get_fdata()[self.trim:-self.trim,self.trim:-self.trim,:]
+					# export new data
+                    _export.HDIexporter(full_result.transpose(1,0,2),full_name)
+                else:
+					# export the non trimmed image
+                    _export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
+            else:
+				# export new data using the aggregated nifti objects
+				# doesnt need to be formally read in because it is memory
+				# mapped to the full_result object
+                _export.HDIexporter(full_result.get_fdata().transpose(1,0,2),full_name)
 
 
 
