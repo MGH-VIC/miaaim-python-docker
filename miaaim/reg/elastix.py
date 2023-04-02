@@ -157,6 +157,35 @@ class ElastixReg():
         logging.info(f'MOVING IMAGE: {str(self.moving)}')
         logging.info(f'OUTPUT FOLDER: {str(self.out_dir)}')
 
+
+		# load images
+        niiFixed = _import.HDIreader(path_to_data=self.fixed,
+									 path_to_markers=None,
+									 flatten=False,
+									 subsample=False,
+									 method=None,
+									 mask=self.fMask,
+									 save_mem=False,
+									 data=None,
+									 image=None,
+									 channels=None,
+									 filename=None
+									 )
+        
+        niiMoving = _import.HDIreader(path_to_data=self.moving,
+									path_to_markers=None,
+									flatten=False,
+									subsample=False,
+									method=None,
+									mask=None,
+									save_mem=False,
+									data=None,
+									image=None,
+									channels=None,
+									filename=None
+									)
+        
+
         # !! Here we check for landmark intermediate !!
         # check for landmark intermediate
         if self.landmark_initialize:
@@ -165,7 +194,60 @@ class ElastixReg():
             # can use the whole image as input here -- elastix will only read
             # the first image channel unless you specify multiple channel inputs!
             # now we register using affine and landmark correspondence
-        	    #Add the parameter files
+            
+    		# multichannel registration check for validating KNN mutual information
+            if multichannel:
+    			# get number of fixed image parameters
+                _,_,cF = niiFixed.hdi.data.image.shape
+    			# get number of moving image parameters
+                _,_,mF = niiMoving.hdi.data.image.shape
+                
+    			#create a temporary directory using the context manager for channel-wise images
+                with tempfile.TemporaryDirectory(dir=self.landmark_reg_dir) as tmpdirname:
+    				#Print update
+                    logging.info('Created temporary directory', tmpdirname)
+    				#Print update
+                    logging.info('Exporting single channel image for landmark alignment')
+    		        #Read the images
+                    niiFixed = niiFixed.hdi.data.image.copy()
+                    niiMoving = niiMoving.hdi.data.image.copy()
+                    
+    				#Export single channel images for each channel of fixed image
+    				#Create a filename
+                    fname = Path(os.path.join(tmpdirname,str(self.fixed.stem+str(0)+self.fixed.suffix)))
+    				#Update the list of names for fixed image
+                    self.command = self.command + ' -f ' + str(fname)
+    				#Check to see if the path exists
+                    if not fname.is_file():
+    					#Create a nifti image
+                        nii_im = nib.Nifti1Image(niiFixed[:,:,0], affine=np.eye(4))
+    					#Save the nifti image
+                        nib.save(nii_im,str(fname))
+
+    				#Remove the fixed image from memory
+                    niiFixed = None
+
+    				#Export single channel images for each channel of fixed image
+    				#Create a filename
+                    mname = Path(os.path.join(tmpdirname,str(self.moving.stem+str(0)+self.moving.suffix)))
+    				#Update the list of names for moving image
+                    self.command = self.command + ' -m ' + str(mname)
+    				#Check to see if the path exists
+                    if not mname.is_file():
+    					#Create a nifti image
+                        nii_im = nib.Nifti1Image(niiMoving[:,:,0], affine=np.eye(4))
+    					#Save the nifti image
+                        nib.save(nii_im,str(mname))
+
+    				#Remove the moving image from memory
+                    niiMoving = None
+            
+            # otherwise, only use the fixed and moving images as usual
+            else:
+    	        #Add fixed and moving image to the command string
+                self.command = self.command+" -f "+str(self.fixed)+ " -m "+str(self.moving)     
+            
+            # add the parameter files
             self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
 			#Add to the command
             self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
@@ -174,9 +256,7 @@ class ElastixReg():
                 #Add the fixed mask to the command if it exists
                 self.command = self.command +" -fMask "+str(fMask)
             #Add the output directory to the command
-            self.command = self.command +" -out "+str(self.landmark_reg_dir)
-	        #Add fixed and moving image to the command string
-            self.command = self.command+" -f "+str(self.fixed)+ " -m "+str(self.moving)            
+            self.command = self.command +" -out "+str(self.landmark_reg_dir)       
 			#Run elastix without creating temporary directory
             RunElastix(self.command)
             
@@ -207,7 +287,10 @@ class ElastixReg():
             # print update
             logging.info("Finished landmark initialization")
             
-            
+        
+        # reset the command!
+        self.command = "elastix"
+        
 		# load images
         niiFixed = _import.HDIreader(path_to_data=self.fixed,
 									 path_to_markers=None,
