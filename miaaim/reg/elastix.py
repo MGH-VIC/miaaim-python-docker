@@ -241,24 +241,37 @@ class ElastixReg():
 
     				#Remove the moving image from memory
                     niiMoving = None
+                    
+                    # add the parameter files
+                    self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
+        			#Add to the command
+                    self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
+                	    #Check for fixed mask
+                    if fMask is not None:
+                        #Add the fixed mask to the command if it exists
+                        self.command = self.command +" -fMask "+str(fMask)
+                    #Add the output directory to the command
+                    self.command = self.command +" -out "+str(self.landmark_reg_dir)       
+        			#Run elastix without creating temporary directory
+                    RunElastix(self.command)
             
             # otherwise, only use the fixed and moving images as usual
             else:
     	        #Add fixed and moving image to the command string
                 self.command = self.command+" -f "+str(self.fixed)+ " -m "+str(self.moving)     
             
-            # add the parameter files
-            self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
-			#Add to the command
-            self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
-        	    #Check for fixed mask
-            if fMask is not None:
-                #Add the fixed mask to the command if it exists
-                self.command = self.command +" -fMask "+str(fMask)
-            #Add the output directory to the command
-            self.command = self.command +" -out "+str(self.landmark_reg_dir)       
-			#Run elastix without creating temporary directory
-            RunElastix(self.command)
+                # add the parameter files
+                self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
+    			#Add to the command
+                self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
+            	    #Check for fixed mask
+                if fMask is not None:
+                    #Add the fixed mask to the command if it exists
+                    self.command = self.command +" -fMask "+str(fMask)
+                #Add the output directory to the command
+                self.command = self.command +" -out "+str(self.landmark_reg_dir)       
+    			#Run elastix without creating temporary directory
+                RunElastix(self.command)
             
             # now we must use transformix to transform the input image according 
             # to the landmark initialization...
