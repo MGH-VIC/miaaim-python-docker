@@ -118,7 +118,7 @@ class ElastixReg():
         self.landmark_p = [Path(par_file) for par_file in landmark_p] if landmark_p is not None else None
         self.moving = Path(moving)
         self.fp = None if fp is None else Path(fp)
-        self.mp = None if mp is None else Path(fp)
+        self.mp = None if mp is None else Path(mp)
         self.fMask = None if fMask is None else Path(fMask)
         self.multichannel = multichannel
         
@@ -220,7 +220,7 @@ class ElastixReg():
     				#Check to see if the path exists
                     if not fname.is_file():
     					#Create a nifti image
-                        nii_im = nib.Nifti1Image(niiFixed[:,:,0], affine=np.eye(4))
+                        nii_im = nib.Nifti1Image(niiFixed[:,:,0].T, affine=np.eye(4))
     					#Save the nifti image
                         nib.save(nii_im,str(fname))
 
@@ -235,7 +235,7 @@ class ElastixReg():
     				#Check to see if the path exists
                     if not mname.is_file():
     					#Create a nifti image
-                        nii_im = nib.Nifti1Image(niiMoving[:,:,0], affine=np.eye(4))
+                        nii_im = nib.Nifti1Image(niiMoving[:,:,0].T, affine=np.eye(4))
     					#Save the nifti image
                         nib.save(nii_im,str(mname))
 
@@ -243,7 +243,8 @@ class ElastixReg():
                     niiMoving = None
                     
                     # add the parameter files
-                    self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
+                    # self.command = self.command+' '.join([" -p "+str(self.landmark_p[0])])
+                    self.command = self.command + ' '.join([" -p " + str(self.landmark_p[par_file]) for par_file in range(len(self.landmark_p))])
         			#Add to the command
                     self.command = self.command +" -fp "+str(self.fp)+" -mp "+str(self.mp)
                 	    #Check for fixed mask
@@ -279,7 +280,7 @@ class ElastixReg():
             logging.info("Transforming according to landmark initialization...")
             
             # access the transform parameters from the landmark registration
-            landmark_tps, _ = utils.GetFirstTransformParameters(dir=self.landmark_reg_dir)
+            _, landmark_tps = utils.GetFirstTransformParameters(dir=self.landmark_reg_dir)
             # add these transform parameters to list of all transformation pars
             self.tps.append(landmark_tps)
             
@@ -403,7 +404,7 @@ class ElastixReg():
 					#Check to see if the path exists
                     if not fname.is_file():
 						#Create a nifti image
-                        nii_im = nib.Nifti1Image(niiFixed[:,:,i], affine=np.eye(4))
+                        nii_im = nib.Nifti1Image(niiFixed[:,:,i].T, affine=np.eye(4))
 						#Save the nifti image
                         nib.save(nii_im,str(fname))
 
@@ -421,7 +422,7 @@ class ElastixReg():
 					#Check to see if the path exists
                     if not mname.is_file():
 						#Create a nifti image
-                        nii_im = nib.Nifti1Image(niiMoving[:,:,i], affine=np.eye(4))
+                        nii_im = nib.Nifti1Image(niiMoving[:,:,i].T, affine=np.eye(4))
 						#Save the nifti image
                         nib.save(nii_im,str(mname))
 
@@ -538,7 +539,7 @@ class InverseElastixReg():
 					#Check to see if the path exists
 					if not fname.is_file():
 						#Create a nifti image
-						nii_im = nib.Nifti1Image(niiFixed[:,:,i], affine=np.eye(4))
+						nii_im = nib.Nifti1Image(niiFixed[:,:,i].T, affine=np.eye(4))
 						#Save the nifti image
 						nib.save(nii_im,str(fname))
 

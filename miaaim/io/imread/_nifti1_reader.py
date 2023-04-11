@@ -138,6 +138,7 @@ class NIFTI1reader:
 
         # Add the filename to the data object
         self.data.filename = path_to_nifti
+        self.data.hdi_type = "array"
 
         # Print an update that the import is finished
         logging.info("Finished")

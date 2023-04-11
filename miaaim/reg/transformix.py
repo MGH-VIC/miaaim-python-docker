@@ -452,14 +452,18 @@ class Transformix():
             self.pad = tuple(self.pad)
 
 		#Load images
-        niiIn = _import.HDIreader(
-		    path_to_data=in_im,
-		    path_to_markers=None,
-		    flatten=False,
-		    subsample=None,
-		    mask=None,
-		    save_mem=False
-		)
+        niiIn = _import.HDIreader(path_to_data=in_im,
+                                     path_to_markers=None,
+                                     flatten=False,
+                                     subsample=False,
+                                     method=None,
+                                     mask=None,
+                                     save_mem=False,
+                                     data=None,
+                                     image=None,
+                                     channels=None,
+                                     filename=None
+                                     )
 		# update file information
         self.baseName = niiIn.hdi.data.filename.stem.replace(".ome","")
         self.ext = "".join(niiIn.hdi.data.filename.suffixes)
@@ -474,7 +478,7 @@ class Transformix():
                 self.out_ext=".nii"
 
 		# check for number of channels in the image by accessing the class
-        if niiIn.hdi.data.num_channels >= 2:
+        if len(niiIn.hdi.data.image.shape) >= 2:
 			# Update multichannel class option
             self.multichannel = True
 		# otherwise this is a single channel image
