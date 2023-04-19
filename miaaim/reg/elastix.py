@@ -285,7 +285,7 @@ class ElastixReg():
             self.tps.append(landmark_tps)
             
             # create transformix
-            transformer = transformix.Transformix(in_im=self.fixed, 
+            transformer = transformix.Transformix(in_im=self.moving,
                                                   out_dir=self.landmark_reg_dir, 
                                                   tps=landmark_tps, 
                                                   target_size=None, 
@@ -295,7 +295,7 @@ class ElastixReg():
                                                   out_ext=None)
             # we should be able to access the exported file name
             # we add this export file name as the new fixed image
-            self.fixed = transformer.out_name
+            self.moving = transformer.out_name
             # rest of script proceeds using intermediate landmark image as the
             # fixed image
             # print update

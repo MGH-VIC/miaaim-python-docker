@@ -774,7 +774,7 @@ class Transformix():
 			# Print update
             print('Created temporary directory', tmpdirname)
 			# Iterate through the channels
-            for i in tqdm(range(niiIn.hdi.data.num_channels)):
+            for i in tqdm(range(niiIn.hdi.data.image.shape[2])):
 				# Print update
 				# print('Working on slice '+str(i))
 				# Create a name for a temporary image
@@ -873,7 +873,7 @@ class Transformix():
 			# Print update
             print('Created temporary directory', tmpdirname)
 			# Iterate through the channels
-            for i in tqdm(range(niiIn.hdi.data.num_channels)):
+            for i in tqdm(range(niiIn.hdi.data.image.shape)):
 				# Print update
 				# print('Working on slice '+str(i))
 				# Create a name for a temporary image
