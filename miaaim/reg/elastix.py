@@ -23,6 +23,8 @@ import miaaim.reg.transformix as transformix
 from miaaim.io.imread import _import
 from miaaim.io.imwrite import _export
 import miaaim
+# for logging purposes
+from miaaim.cli.reg import _parse
 
 
 #Add main elastix component
@@ -503,7 +505,7 @@ class InverseElastixReg():
 		self.command = self.command +" -t0 "+str(self.t)
 
 	    #Check to see if there is single channel input (grayscale)
-		if niiFixed.ndim == 2 and niiMoving.ndim == 2:
+		if niiFixed.ndim == 2:
 			print('Detected single channel input images...')
 	        #Add fixed and moving image to the command string
 			self.command = self.command+" -f "+str(self.fixed)
@@ -712,19 +714,23 @@ class Elastix():
         self.logger = logger
         self.sh_name = sh_name
         self.yaml_name = yaml_name
+        # create objects to be filled
+        self.fixed = None
+        self.moving = None
+        self.p = None
+        self.tps = None
         
     def Register(self, fixed, moving, p, landmark_p=None, out_dir=None, fp=None, mp=None, fMask=None, multichannel=True):
         # create pathlib objects
         fixed = Path(fixed)
         moving = Path(moving)
         p = [ Path(i) for i in p ]
-        
-        # check default options
-        if out_dir is None:
-            out_dir = self.registration_name_dir
-        else:
-            out_dir = Path(out_dir)
-        
+        out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir
+        # update class attributes
+        self.fixed = fixed
+        self.moving = moving
+        self.p = p
+    
 		# log
         logging.info('ELASTIX IMAGE REGISTRATION')
         # update logger
@@ -732,10 +738,10 @@ class Elastix():
 															  'moving':str(moving),
 															  'out_dir':str(out_dir),
 															  'p':[ str(i) for i in p ],
-                                                             'landmark_p': landmark_p,
-															  'fp':str(fp),
-															  'mp':str(mp),
-															  'fMask':str(fMask),
+                                                               'landmark_p': landmark_p,
+															  'fp':fp,
+															  'mp':mp,
+															  'fMask':fMask,
 															  'multichannel':multichannel}}))
 
 		# run elastix registration class
@@ -752,111 +758,69 @@ class Elastix():
                         )
         
     def Transform(self, in_im=None, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=".nii"):
-		# check for parameters to be default
-        if in_im is None:
-            in_im = self.fixed
-        else:
-            in_im = Path(in_im)
-            
-        if out_dir is None:
-            out_dir = self.registration_name_dir
-        else:
-            out_dir = Path(out_dir)
-            
-        if t is None:
-            t = self.t
-        if p_forward is None:
-            p_forward = self.p_forward
-            
-        if p is None:
-            p = self.p        
-        
+        # create pathlib objects and set defaults
+        in_im = Path(in_im) if out_dir is not None else self.moving
+        out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir
+        tps = [Path(par_file) for par_file in tps] if tps is not None else self.p
+        target_size = tuple(target_size) if target_size is not None else None
+        pad = pad if pad is not None else None
+        trim = trim if trim is not None else None
+        # !!! set crops to None for now !!!
+        crops = None
+         
 		# log
-        logging.info(f'TRANSFORMIX IMAGE TRANSFORMER')
+        logging.info('TRANSFORMIX IMAGE TRANSFORMER')
 
         # update logger
         self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':str(in_im),
 															   'out_dir':str(out_dir),
-															   'p':p,
-															   'fp':fp,
-															   'mp':mp,
-															   'fMask':fMask,
-															   'multichannel':multichannel}}))
+															   'tps':[ str(i) for i in tps ],
+															   'target_size':str(target_size),
+                                                                'pad':str(pad),
+                                                                'trim':str(trim),
+                                                                'crops':crops,
+															   'out_ext':str(out_ext)}}))
 
 		# run transformix class
-        self.transformix = Transformix()
-        self.transformix.Transform(in_im=in_im, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=".nii")
+        self.transformix = transformix.Transformix()
+        self.transformix.Transform(in_im=in_im, 
+                                   out_dir=out_dir, 
+                                   tps=tps, 
+                                   target_size=target_size, 
+                                   pad=pad, 
+                                   trim=trim, 
+                                   crops=crops,
+                                   out_ext=".nii"
+                                   )
         
     def Invert(self, fixed=None, out_dir=None, t=None, p_forward=None, p=None, mkdir=True):
 		# log
-        logging.info(f'COMPUTING APPROXIMATE INVERSE TRANSFORMATION')
-
-		# check for parameters to be default
-        if fixed is None:
-            fixed = self.fixed
-            
-        if out_dir is None:
-            out_dir = self.out_dir
-            
-        if t is None:
-            t = self.t
-        if p_forward is None:
-            p_forward = self.p_forward
-            
-        if p is None:
-            p = self.p
-
+        # logging.info(f'COMPUTING APPROXIMATE INVERSE TRANSFORMATION')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"Invert":{'fixed':fixed,
-															'moving':moving,
-															'out_dir':out_dir,
-															'p':p,
-															'fp':fp,
-															'mp':mp,
-															'fMask':fMask,
-															'multichannel':multichannel}}))
-
+        raise NotImplementedError
 		# run elastix registration class
-        self.inverseElastix = InverseElastixReg()
-        self.inverseElastix.Invert(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
+        # self.inverseElastix = InverseElastixReg()
+        # self.inverseElastix.Invert(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
     
     def InverseTransform(self):
 		# log
-        logging.info(f'APPLYING APPROXIMATE INVERSE TRANSFORMATION')
+        # logging.info(f'APPLYING APPROXIMATE INVERSE TRANSFORMATION')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"InverseTransform":{'fixed':fixed,
-																	  'moving':moving,
-																	  'out_dir':out_dir,
-																	  'p':p,
-																	  'fp':fp,
-																	  'mp':mp,
-																	  'fMask':fMask,
-																	  'multichannel':multichannel}}))
-
-
+        raise NotImplementedError
 		# run elastix registration class
-        self.inverseTransformix = Transformix()
-        self.inverseTransformix.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
+        # self.inverseTransformix = Transformix()
+        # self.inverseTransformix.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
         
     def MaskTransform(self):
         """Pull from the QC prep directory
         """
 		# log
-        logging.info(f'TRANSFORMIX MASK TRANSFORMER')
+        # logging.info(f'TRANSFORMIX MASK TRANSFORMER')
         # update logger
-        self.yaml_log['ProcessingSteps'].append(({"MaskTransform":{'fixed':fixed,
-																   'moving':moving,
-																   'out_dir':out_dir,
-																   'p':p,
-																   'fp':fp,
-																   'mp':mp,
-																   'fMask':fMask,
-																   'multichannel':multichannel}}))
-
-
+        raise NotImplementedError
 		# run elastix registration class
-        self.maskTransform = Transformix()
-        self.maskTransform.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
+        # self.maskTransform = Transformix()
+        # self.maskTransform.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
         
     def TransformVectorField(self):
         raise NotImplementedError
@@ -867,9 +831,6 @@ class Elastix():
         raise NotImplementedError
         
     def LandmarksTransform(self):
-        raise NotImplementedError
-        
-    def QCmetrics(self):
         raise NotImplementedError
         
     def _exportYAML(self):

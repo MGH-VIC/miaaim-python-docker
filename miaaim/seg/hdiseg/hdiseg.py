@@ -1355,7 +1355,7 @@ class HDISegmentation:
         # print first log
         logging.info("MIAAIM SEGMENTATION")
         logging.info(f'MIAAIM VERSION {miaaim.__version__}')
-        logging.info(f'METHOD: hdiseg')
+        logging.info('METHOD: hdiseg')
         logging.info(f'ROOT FOLDER: {self.root_folder}')
         logging.info(f'PROVENANCE FOLDER: {self.prov_dir}')
         logging.info(f'QC FOLDER: {self.qc_seg_name_dir} \n')

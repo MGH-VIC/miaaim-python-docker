@@ -14,6 +14,7 @@ import tempfile
 from skimage.transform import resize
 import shutil
 from tqdm import tqdm
+from ast import literal_eval
 
 #Import external modules
 from miaaim.io.imread import _import
@@ -444,12 +445,18 @@ class Transformix():
         self.out_name = None
 		# Check for input list or none
         if self.target_size!=None:
-			# convert it to tuple from list (command line parser)
-            self.target_size = tuple(self.target_size)
+            # convert to tuple and back to pathlib after logging
+            if isinstance(self.target_size,str):
+                self.target_size = literal_eval(self.target_size)
+        			# convert it to tuple from list (command line parser)
+                self.target_size = tuple(self.target_size)
 		# Check for input list or none
         if self.pad!=None:
-			# convert it to tuple from list (command line parser)
-            self.pad = tuple(self.pad)
+            # convert to tuple and back to pathlib after logging
+            if isinstance(self.pad,str):
+                self.self.pad = literal_eval(self.pad)
+        			# convert it to tuple from list (command line parser)
+                self.pad = tuple(self.pad)
 
 		#Load images
         niiIn = _import.HDIreader(path_to_data=in_im,

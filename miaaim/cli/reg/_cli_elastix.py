@@ -4,11 +4,10 @@
 
 #Import custom modules
 from miaaim.cli.reg import _parse
-from miaaim.cli.reg import _yaml_elastix
-from miaaim.reg import _elastix
+from miaaim.reg.ilastik import _yaml_reg
 
 #Parse the command line arguments
-args = _parse.ParseCommandElastix()
+args = _parse.ParseHDIregistrationYAML()
 
 #Run the elastix registration function
-_elastix.Elastix(**args)
+_yaml_reg.RunHDIregistrationYAML(**args)

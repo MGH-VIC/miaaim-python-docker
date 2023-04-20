@@ -13,7 +13,7 @@ from miaaim.seg.hdiseg import hdiseg
 
 
 # Define parsing function
-def RunHDIsegmentationYAML(pars,force_export):
+def RunHDIsegmentationYAML(pars):
     """Parsing YAML file for HDISegmentation workflow.
     """
 

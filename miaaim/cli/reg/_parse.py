@@ -6,6 +6,23 @@
 import argparse
 
 
+def ParseHDIregistrationYAML():
+   """Function for parsing command line arguments for input to registration YAML
+   """
+
+#if __name__ == '__main__':
+   parser = argparse.ArgumentParser()
+   parser.add_argument('--pars')
+
+   args = parser.parse_args()
+
+   # create dictionary
+   dict = {'pars': args.pars}
+   print(dict)
+   return dict
+
+
+
 def ParseCommandElastix():
    """Function for parsing command line arguments for input to elastix
    """
@@ -54,7 +71,7 @@ def ParseCommandTransformix():
 
 
 def ParseCommandElastixYAML():
-    """Function for parsing command line arguments for input to YAML HDIprep"""
+    """Function for parsing command line arguments for input to YAML Elatix"""
 
     # if __name__ == '__main__':
     parser = argparse.ArgumentParser()
