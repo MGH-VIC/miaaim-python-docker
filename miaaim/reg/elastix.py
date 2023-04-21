@@ -79,10 +79,6 @@ class ElastixReg():
 		# initialize command line strings
         self.command = "elastix"
 
-		# create log for yaml file exporting
-        self.yaml_log = {}
-        # update logger with version number of miaaim
-        self.yaml_log.update({"VERSION":miaaim.__version__})
         
     def Register(self, fixed, moving, out_dir,p,landmark_p=None,fp=None,mp=None,fMask=None,multichannel=True):
         """Register images using elastix image registration and
@@ -591,13 +587,6 @@ class Elastix():
         self.resume = resume
         self.qc = True
         
-        # create log for yaml file exporting
-        self.yaml_log = {}
-        # update logger with version number of miaaim
-        self.yaml_log.update({"VERSION":miaaim.__version__})
-        self.yaml_log.update({'METHOD':"Elastix"})
-        # update yaml_log with processing steps (initialize to empty)
-        self.yaml_log.update({'ProcessingSteps':[]})
         
         # create logger format
         FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
@@ -678,6 +667,16 @@ class Elastix():
         else:
             # start yaml log
             self.yaml_log = {}
+            # update logger with version number of miaaim
+            self.yaml_log.update({"MIAAIM VERSION":miaaim.__version__})
+            # update yaml file
+            self.yaml_log.update({'MODULE':"Registration"})
+            self.yaml_log.update({'METHOD':"elastix"})
+            self.yaml_log.update({'ImportOptions':{'root_folder':str(self.root_folder),
+                                                    'name':str(self.name),
+                                                    'resume':self.resume}})            
+            # update yaml_log with processing steps (initialize to empty)
+            self.yaml_log.update({'ProcessingSteps':[]})
 
             # check if it exists already
             if Path(log_name).exists():
