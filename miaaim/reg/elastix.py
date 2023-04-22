@@ -58,7 +58,7 @@ def RunElastix(command):
 
 #Define elastix class structure
 class ElastixReg():
-    def __init__(self, mkdir=True):
+    def __init__(self, mkdir=False):
         
         # input parameter
         self.mkdir = mkdir
@@ -703,7 +703,7 @@ class Elastix():
         # update attributes
         self.root_folder = root_folder
         self.registration_dir = registration_dir
-        self.registration_name_dir = registration_dir
+        self.registration_name_dir = registration_name_dir
         self.docs_dir = docs_dir
         self.qc_dir = qc_dir
         self.qc_reg_dir = qc_reg_dir
