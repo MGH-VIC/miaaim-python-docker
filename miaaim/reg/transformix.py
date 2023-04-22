@@ -485,7 +485,7 @@ class Transformix():
                 self.out_ext=".nii"
 
 		# check for number of channels in the image by accessing the class
-        if len(niiIn.hdi.data.image.shape) >= 2:
+        if len(niiIn.hdi.data.image.shape) >= 3:
 			# Update multichannel class option
             self.multichannel = True
 		# otherwise this is a single channel image
