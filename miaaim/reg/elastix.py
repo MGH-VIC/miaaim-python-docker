@@ -756,10 +756,14 @@ class Elastix():
                         multichannel=multichannel
                         )
         
-    def Transform(self, in_im=None, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=".nii"):
+    def Transform(self, in_im=None, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=None):
         # create pathlib objects and set defaults
         in_im = Path(in_im) if out_dir is not None else self.moving
-        out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir
+        # create pathlib objects and set defaults
+        out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir.joinpath("transformix")
+        # create directory if doesnt exist already
+        if not out_dir.exists():
+            out_dir.mkdir()
         tps = [Path(par_file) for par_file in tps] if tps is not None else self.p
         target_size = tuple(target_size) if target_size is not None else None
         pad = pad if pad is not None else None
@@ -770,16 +774,6 @@ class Elastix():
 		# log
         logging.info('TRANSFORMIX IMAGE TRANSFORMER')
 
-        # update logger
-        self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':str(in_im),
-															   'out_dir':str(out_dir),
-															   'tps':[ str(i) for i in tps ],
-															   'target_size':str(target_size),
-                                                                'pad':str(pad),
-                                                                'trim':str(trim),
-                                                                'crops':crops,
-															   'out_ext':str(out_ext)}}))
-
 		# run transformix class
         self.transformix = transformix.Transformix()
         self.transformix.Transform(in_im=in_im, 
@@ -789,8 +783,17 @@ class Elastix():
                                    pad=pad, 
                                    trim=trim, 
                                    crops=crops,
-                                   out_ext=".nii"
+                                   out_ext=out_ext
                                    )
+        # update logger
+        self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':str(in_im),
+															   'out_dir':str(out_dir),
+															   'tps':[ str(i) for i in tps ],
+															   'target_size':str(target_size),
+                                                                'pad':str(pad),
+                                                                'trim':str(trim),
+                                                                'crops':crops,
+															   'out_ext':out_ext}}))
         
     def Invert(self, fixed=None, out_dir=None, t=None, p_forward=None, p=None, mkdir=True):
 		# log
@@ -810,26 +813,54 @@ class Elastix():
         # self.inverseTransformix = Transformix()
         # self.inverseTransformix.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
         
-    def TransformMask(self):
-        """Pull from the QC prep directory
-        """
+    def TransformMask(self, in_im, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=None):
 		# log
-        # logging.info(f'TRANSFORMIX MASK TRANSFORMER')
+        logging.info('TRANSFORMIX MASK TRANSFORMER')
+        # create pathlib objects and set defaults
+        out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir.joinpath("mask_transform")
+        # create directory if doesnt exist already
+        if not out_dir.exists():
+            out_dir.mkdir()
+        tps = [Path(par_file) for par_file in tps] if tps is not None else self.p
+        target_size = tuple(target_size) if target_size is not None else None
+        pad = pad if pad is not None else None
+        trim = trim if trim is not None else None
+        # !!! set crops to None for now !!!
+        crops = None        
+        
         # update logger
-        raise NotImplementedError
-		# run elastix registration class
-        # self.maskTransform = Transformix()
-        # self.maskTransform.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
+        logging.info('Altering transform parameters for binary masks...')
+        # change transform parameters for the binary mask
+        mask_tps = utils.InitiateMaskTransformParameters(
+            TransformParameters=tps, 
+            outdir=out_dir)
+        # update log
+        logging.info(f'Mask transform parameters: {mask_tps}')        
+		# run transformix class
+        self.maskTransformix = transformix.Transformix()
+        self.maskTransformix.Transform(in_im=in_im, 
+                                   out_dir=out_dir, 
+                                   tps=mask_tps, 
+                                   target_size=target_size, 
+                                   pad=pad, 
+                                   trim=trim, 
+                                   crops=crops,
+                                   out_ext=out_ext
+                                   )
+        # update logger
+        self.yaml_log['ProcessingSteps'].append(({"TransformMask":{'fixed':str(in_im),
+															   'out_dir':str(out_dir),
+															   'tps':[ str(i) for i in mask_tps ],
+															   'target_size':str(target_size),
+                                                                'pad':str(pad),
+                                                                'trim':str(trim),
+                                                                'crops':crops,
+															   'out_ext':out_ext}}))
         
     def TransformVectorField(self):
         raise NotImplementedError
         
-    def BoundaryMaskTransform(self):
-        """Pull from the QC prep directory
-        """
-        raise NotImplementedError
-        
-    def LandmarksTransform(self):
+    def TransformLandmarks(self):
         raise NotImplementedError
         
     def _exportYAML(self):

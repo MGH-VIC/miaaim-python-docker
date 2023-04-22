@@ -426,7 +426,7 @@ class Transformix():
             pad = None, 
             trim = None, 
             crops = None, 
-            out_ext = ".nii"):
+            out_ext = None):
         
         #Create pathlib objects and set class parameters
         self.in_im = Path(in_im)
@@ -681,11 +681,10 @@ class Transformix():
 		# here we will get the extension of the image and will convert it to the nift-1
 		# format if it is not already in that format. While users can supply their own
 		# nifti formatted image to the pipeline, this ensures that other file formats
-		# can be used, although, it creates additionally overhead
+		# can be used, although, it creates additional overhead
 		# here we supply all preprocessing commands that were used to preprocess or morph
-		# the array size of the input image through the hdiprep workflow. Transformix
-		# must be run on images with the same size as the elastix registration
-        if ((self.out_ext!=".nii") or (self.target_size!=None) or (self.pad!=None)):
+		# the array size of the input image through the hdiprep workflow.
+        if ((self.ext!=".nii") or (self.target_size!=None) or (self.pad!=None)):
 			# get the shape of the image
             shp = len(niiIn.hdi.data.image_shape)
 			# create new name for the temporary image
@@ -745,10 +744,10 @@ class Transformix():
         self.out_name = new_name
 
 		# check if the output format needs to be switched -- set by the user
-        if (self.out_ext!=".nii") or (self.trim!=None):
+        if (self.out_ext!=self.ext) or (self.trim!=None):
 			# use HDIreader for now to parse image and exporter to export
             niiIn = _import.HDIreader(
-			    path_to_data=self.in_im,
+			    path_to_data=res_name,
 			    path_to_markers=None,
 			    flatten=False,
 			    subsample=None,
@@ -847,7 +846,7 @@ class Transformix():
             self.out_name = full_name
 
 			# check if the output format needs to be switched -- set by the user
-            if (self.out_ext!=".nii") or (self.trim!=None):
+            if (self.out_ext!=self.ext) or (self.trim!=None):
 				# check the trim
                 if self.trim!=None:
 					# trim the image borders
@@ -946,7 +945,7 @@ class Transformix():
             self.out_name = full_name
 
 			# check if the output format needs to be switched -- set by the user
-            if (self.out_ext!=".nii") or (self.trim!=None):
+            if (self.out_ext!=self.ext) or (self.trim!=None):
 				# check the trim
                 if self.trim!=None:
 					# trim the image borders

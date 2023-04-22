@@ -581,13 +581,11 @@ def FormatFijiLandmarkPoints(txt_file, selection_type):
     # return the new name
     return outname
 
-
-
 # testing
-#in_dir = Path("/Users/joshuahess/Desktop/test")
-#TransformParameters = [ in_dir.joinpath("TransformParameters.0.txt"),
-#         in_dir.joinpath("TransformParameters.1.txt") ]
-#outdir=in_dir
+# in_dir = Path("/Users/joshuahess/Desktop/test")
+# TransformParameters = [ in_dir.joinpath("TransformParameters.0.txt"),
+#          in_dir.joinpath("TransformParameters.1.txt") ]
+# outdir=in_dir
 
 def InitiateMaskTransformParameters(TransformParameters, outdir):
     """
@@ -614,10 +612,6 @@ def InitiateMaskTransformParameters(TransformParameters, outdir):
     out_files = []
 	# iterate through parameter files
     for p in ps:
-        p = ps[0]
-		# create new flag for exporting new text file
-        flag = False
-
 		# get components of filename
         nm = "Mask_"+p.name
 		# create output name
@@ -634,97 +628,34 @@ def InitiateMaskTransformParameters(TransformParameters, outdir):
         for x in filedata:
             result.append(x.split('\n')[0])
 
-    # replace compose transforms
-    par = 'FinalBSplineInterpolationOrder'
-    # get line which matches this parameter
-    lines = [s for s in result if str(par+' ') in s]
-    # filter the lines
-    for l in lines:
-    	# extract first word
-    	test = l.split(" ")[0].replace('(',"")
-    	# see if first word is a match
-    	if test == par:
-    		# set line to be the desired string
-    		lines = l
-    		# break
-    		break
-    # get the string after space (exclude parenthesis at end)
-    value = lines.split(" ")[1:][0][:-1]
-    # replace the value in the line with new value
-    newline = lines.replace(value,"0")
-    # replace the results with the newline
-    result_out=list(map(lambda x: x.replace(lines,newline),result_out))
+        # replace compose transforms
+        par = 'FinalBSplineInterpolationOrder'
+        # get line which matches this parameter
+        lines = [s for s in result if str(par+' ') in s]
+        # filter the lines
+        for l in lines:
+        	# extract first word
+        	test = l.split(" ")[0].replace('(',"")
+        	# see if first word is a match
+        	if test == par:
+        		# set line to be the desired string
+        		lines = l
+        		# break
+        		break
+        # get the string after space (exclude parenthesis at end)
+        value = lines.split(" ")[1:][0][:-1]
+        # replace the value in the line with new value
+        newline = lines.replace(value,"0")
+        # replace the results with the newline
+        result_out=list(map(lambda x: x.replace(lines,newline),result_out))
 
-
-
-    #Read the transform parameters
-    with open(TransformParameters, 'r') as file:
-        filedata = file.read()
-    #Replace the FinalBSplineInterpolationOrder with 0 order
-    filedata = filedata.replace("(FinalBSplineInterpolationOrder 3)", "(FinalBSplineInterpolationOrder 0)")
-    #Replace the file type from nifti to tif
-    filedata = filedata.replace('(ResultImageFormat "nii")', '(ResultImageFormat "tif")')
-    #Replace the resulting image pixel type from double to 8bit
-    filedata = filedata.replace('(ResultImagePixelType "double")', '(ResultImagePixelType "char")')
-    #Get the parent directory and filename
-    filename = Path(TransformParameters)
-    #Create name for the new transform parameter file
-    new_name = Path(os.path.join(str(filename.parent),str("Mask_"+filename.stem+filename.suffix)))
-    #Write out the new file
-    with open(new_name, 'w+') as new_file:
-        new_file.write(filedata)
-    #Close the files
-    file.close()
-    new_file.close()
+		# write a new file
+        with open(out_nm, 'w') as f:
+            f.writelines(result_out)
+        # append the new name to list of output files
+        out_files.append(out_nm)
     #Return the path to the TransformParameters
-    return new_name
-
-
-def ConvertMasksToNifti(masks):
-    """Since the nifti format is used for image registration, the moving
-    mask has to be converted to the nifti format 
-    as well due to rotation and center of origin
-    """
-
-    #Check if the images are a list or a single file
-    if not isinstance(masks, list):
-        #if the masks are a single file, convert them to a list
-        masks = [masks]
-    #Set up a list of export names
-    exp_names = []
-    #Iterate through the masks list and export to nifti
-    for mask in masks:
-        #Get the image path and name
-        name = Path(mask)
-        #Get the new name
-        export_name = os.path.join(str(name.parent),name.stem+'.nii')
-        #Read the image
-        im = skimage.io.imread(name)
-        #convert to nifti image (have to flip and rotate to get same image)
-        nii_im = nib.Nifti1Image(np.rot90(np.fliplr(im),1), affine=np.eye(4))
-        #Save the image
-        nib.save(nii_im,export_name)
-        #Update the export name list
-        exp_names.append(Path(export_name))
-    #Return the export path for future reference
-    return exp_names
-
-
-
-
-
-
-
-#import skimage.io
-#import nibabel as nib
-#import matplotlib.pyplot as plt
-
-#name = "/Users/joshuahess/Desktop/ROI014_PROSTATE_TMA005_core_msi_mask.tif"
-#im = skimage.io.imread(name)
-#convert to nifti image (have to flip and rotate to get same image)
-#nii_im = nib.Nifti1Image(np.rot90(np.fliplr(im),1), affine=np.eye(4))
-#Save the image
-#nib.save(nii_im,"/Users/joshuahess/Desktop/ROI014_PROSTATE_TMA005_core_msi_mask.nii")
+    return out_files
 
 
 
