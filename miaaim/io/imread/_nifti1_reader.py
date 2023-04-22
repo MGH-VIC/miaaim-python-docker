@@ -53,7 +53,7 @@ class NIFTI1reader:
 
                 #####Currently transpose the image as default####
                 # Add the image from nibabel to the image object (memmap object)
-                if len(self.data.get_fdata().shape) > 1:
+                if len(self.data.get_fdata().shape) > 2:
                     self.data.image = self.data.get_fdata().transpose(1, 0, 2)
                 else:
                     # single channel

@@ -9,6 +9,8 @@ import re
 import pandas as pd
 import numpy as np
 import warnings
+import skimage.io
+import nibabel as nib
 
 def SearchDir(ending = ".txt",dir=None):
     """Search only in given directory for files that end with
@@ -678,13 +680,14 @@ def InitiateMaskTransformParameters(TransformParameters, outdir):
     return new_name
 
 
-
 def ConvertMasksToNifti(masks):
     """Since the nifti format is used for image registration, the moving
-    mask has to be converted to the nifti format as well due to rotation and center of origin"""
+    mask has to be converted to the nifti format 
+    as well due to rotation and center of origin
+    """
 
     #Check if the images are a list or a single file
-    if type(masks) is not list:
+    if not isinstance(masks, list):
         #if the masks are a single file, convert them to a list
         masks = [masks]
     #Set up a list of export names
@@ -722,7 +725,6 @@ def ConvertMasksToNifti(masks):
 #nii_im = nib.Nifti1Image(np.rot90(np.fliplr(im),1), affine=np.eye(4))
 #Save the image
 #nib.save(nii_im,"/Users/joshuahess/Desktop/ROI014_PROSTATE_TMA005_core_msi_mask.nii")
-
 
 
 

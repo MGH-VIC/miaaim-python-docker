@@ -810,7 +810,7 @@ class Elastix():
         # self.inverseTransformix = Transformix()
         # self.inverseTransformix.Transform(fixed=fixed, out_dir=out_dir, t=t, p_forward=p_forward, p=p, mkdir=mkdir)
         
-    def MaskTransform(self):
+    def TransformMask(self):
         """Pull from the QC prep directory
         """
 		# log
