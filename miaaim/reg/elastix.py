@@ -781,16 +781,14 @@ class Elastix():
         logging.info('TRANSFORMIX IMAGE TRANSFORMER')
 
 		# run transformix class
-        self.transformix = transformix.Transformix()
-        self.transformix.Transform(in_im=in_im, 
+        self.transformix = transformix.Transformix(in_im=in_im, 
                                    out_dir=out_dir, 
                                    tps=tps, 
                                    target_size=target_size, 
                                    pad=pad, 
                                    trim=trim, 
                                    crops=crops,
-                                   out_ext=out_ext
-                                   )
+                                   out_ext=out_ext)
         # update logger
         self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':str(in_im),
 															   'out_dir':str(out_dir),
@@ -843,16 +841,14 @@ class Elastix():
         # update log
         logging.info(f'Mask transform parameters: {mask_tps}')        
 		# run transformix class
-        self.maskTransformix = transformix.Transformix()
-        self.maskTransformix.Transform(in_im=in_im, 
+        self.maskTransformix = transformix.Transformix(in_im=in_im, 
                                    out_dir=out_dir, 
                                    tps=mask_tps, 
                                    target_size=target_size, 
                                    pad=pad, 
                                    trim=trim, 
                                    crops=crops,
-                                   out_ext=out_ext
-                                   )
+                                   out_ext=out_ext)
         # update logger
         self.yaml_log['ProcessingSteps'].append(({"TransformMask":{'fixed':str(in_im),
 															   'out_dir':str(out_dir),
