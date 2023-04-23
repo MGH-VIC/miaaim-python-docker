@@ -15,6 +15,7 @@ import tempfile
 import warnings
 import yaml
 import logging
+from functools import reduce
 logging.captureWarnings(True)
 
 # import custom modules
@@ -433,6 +434,9 @@ class ElastixReg():
         _, tps = utils.GetFirstTransformParameters(dir=self.elastix_dir)
         # update the list of transform parameters
         self.tps.append(tps)
+        # reduce to flattened list
+        self.tps = reduce(lambda a,b:a+b, self.tps)
+        
 
 class InverseElastixReg():
 	"""Invert an image registration process using elastix.
@@ -878,7 +882,7 @@ class Elastix():
             # append to list
             tps.append(ps)
         # return parameters
-        return tps
+        return reduce(lambda a,b:a+b, tps)
         
     def _exportYAML(self):
         """Function to export yaml log to file for documentation
