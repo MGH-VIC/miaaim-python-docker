@@ -729,6 +729,12 @@ class Elastix():
         self.fixed = fixed
         self.moving = moving
         self.p = p
+        # check for landmark parameters (must convert to string for now for logging)
+        landmark_p = [ str(lp) for lp in landmark_p ] if landmark_p is not None else None
+        # check for points (again change to string for now) and mask
+        fp = str(fp) if fp is not None else None
+        mp = str(mp) if mp is not None else None
+        fMask = str(fMask) if fMask is not None else None
     
 		# log
         logging.info('ELASTIX IMAGE REGISTRATION')
@@ -764,7 +770,7 @@ class Elastix():
         # create directory if doesnt exist already
         if not out_dir.exists():
             out_dir.mkdir()
-        tps = [Path(par_file) for par_file in tps] if tps is not None else self.p
+        tps = [Path(par_file) for par_file in tps] if tps is not None else self.elastix.tps
         target_size = tuple(target_size) if target_size is not None else None
         pad = pad if pad is not None else None
         trim = trim if trim is not None else None
@@ -821,7 +827,7 @@ class Elastix():
         # create directory if doesnt exist already
         if not out_dir.exists():
             out_dir.mkdir()
-        tps = [Path(par_file) for par_file in tps] if tps is not None else self.p
+        tps = [Path(par_file) for par_file in tps] if tps is not None else self.elastix.tps
         target_size = tuple(target_size) if target_size is not None else None
         pad = pad if pad is not None else None
         trim = trim if trim is not None else None
@@ -862,6 +868,21 @@ class Elastix():
         
     def TransformLandmarks(self):
         raise NotImplementedError
+        
+    def get_transforms_from_directories(self, dirs):
+        # check if directories is list (in order)
+        if not isinstance(dirs,list):
+            dirs = [ dirs ]
+        # create list to store parameters in
+        tps = []
+        # iterate through directories
+        for d in dirs:
+            # get parameters
+            _, ps = utils.GetFirstTransformParameters(dir=d)
+            # append to list
+            tps.append(ps)
+        # return parameters
+        return tps
         
     def _exportYAML(self):
         """Function to export yaml log to file for documentation
