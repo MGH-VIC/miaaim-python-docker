@@ -768,7 +768,7 @@ class Elastix():
         
     def Transform(self, in_im=None, out_dir=None, tps=None, target_size=None, pad=None, trim=None, crops=None, out_ext=None):
         # create pathlib objects and set defaults
-        in_im = Path(in_im) if out_dir is not None else self.moving
+        in_im = Path(in_im) if in_im is not None else self.moving
         # create pathlib objects and set defaults
         out_dir = Path(out_dir) if out_dir is not None else self.registration_name_dir.joinpath("transformix")
         # create directory if doesnt exist already
