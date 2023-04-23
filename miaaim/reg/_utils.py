@@ -606,28 +606,88 @@ def InitiateMaskTransformParameters(TransformParameters, outdir):
 
     """
 	# create pathlib objects
-    ps = [Path(par_file)for par_file in TransformParameters]
+    tps = [Path(par_file)for par_file in TransformParameters]
     outdir = Path(outdir)
-    # create list for new files
-    out_files = []
-	# iterate through parameter files
-    for p in ps:
-		# get components of filename
-        nm = "Mask_"+p.name
-		# create output name
-        out_nm = Path.joinpath(outdir,nm)
 
+	#Create a list of new filenames that will be exported
+    new_tps = [Path(os.path.join(str(outdir),"Mask_TransformParameters."+str(i)+".txt")) for i in range(len(tps))]
+	#Create a list of items to store for no initial transforms -- these are going
+    init_trans_list = []
+	#Create a lsit of files that transformix will call on
+    transform_calls = []
+
+	#Create a dictionary that stores old tps and new tps
+    tp_dict = {}
+	#Iterate through tps and add to dictionary
+    for t in range(len(tps)):
+        #Access the old tp name and new, add to the dictionary
+        tp_dict.update({tps[t]:new_tps[t]})
+
+	#Iterate through all other files and change inital transforms
+    for t in range(0,len(tps[1:])+1):
+        #Extract and modify the first file in the list of transform parameters
+        with open(tps[t], 'r') as f:
+			#Read the file
+            filedata = f.read()
+			#Search for the initial transform parameter
+            for l in list(filedata.split("\n")):
+				#Check if inital transform string is in the line
+                if "InitialTransformParametersFileName" in l:
+					#Extract the inital transform parameter string
+                    init_trans = l.split(" ")[1].strip(")").strip('"')
+			#Update the list of init trans
+            init_trans_list.append(init_trans)
+
+	#Now iterate through the init trans files and add true or false for whether they are essential (called in transformix)
+    for t in range(0,len(init_trans_list[1:])):
+		#Extract the init trans file and the one above -- skip last one -- always used!
+        if init_trans_list[t+1] == 'NoInitialTransform':
+			#Update the list at t to be true
+            transform_calls.append(new_tps[t])
+
+	#Add the last transform parameter to the transform call by default
+    transform_calls.append(new_tps[len(new_tps)-1])
+
+	#Iterate through all other files and change inital transforms
+    for t in range(0,len(tps[1:])+1):
+		#Extract and modify the first file in the list of transform parameters
+        with open(tps[t], 'r') as f:
+			#Read the file
+            filedata = f.read()
+			#Search for the initial transform parameter
+            for l in list(filedata.split("\n")):
+				#Check if inital transform string is in the line
+                if "InitialTransformParametersFileName" in l:
+					#Extract the inital transform parameter string
+                    init_trans = l.split(" ")[1].strip(")").strip('"')
+
+		#Check to ensure that the initial transform is no initial transform
+        if init_trans != 'NoInitialTransform':
+			#Get the corresponding new file name from the old
+			#n_tp = tp_dict[Path(init_trans)]
+            n_tp = new_tps[t-1]
+			#Then replace the initial transform in the file with the new tp
+            filedata = filedata.replace(init_trans, str(n_tp))
+
+		#Write out the new data to the new transform parameter filename
+        with open(new_tps[t], 'w') as file:
+			#Write the new file
+            file.write(filedata)
+        # clear file data
+        filedata=None
+        
+	# iterate through parameter files and change b spline interpolation order
+    # !!! redundant but works for now !!!
+    for p in new_tps:
 		#Read the registration parameters
         with open(p, 'r') as file:
             filedata = file.readlines()
-
 		# create copy of filedata
         result_out = filedata.copy()
 		# add each line to a list with separation
         result=[]
         for x in filedata:
             result.append(x.split('\n')[0])
-
         # replace compose transforms
         par = 'FinalBSplineInterpolationOrder'
         # get line which matches this parameter
@@ -648,15 +708,12 @@ def InitiateMaskTransformParameters(TransformParameters, outdir):
         newline = lines.replace(value,"0")
         # replace the results with the newline
         result_out=list(map(lambda x: x.replace(lines,newline),result_out))
-
 		# write a new file
-        with open(out_nm, 'w') as f:
+        with open(p, 'w') as f:
             f.writelines(result_out)
-        # append the new name to list of output files
-        out_files.append(out_nm)
-    #Return the path to the TransformParameters
-    return out_files
 
+	#Return the list of new parameter files
+    return new_tps
 
 
 
