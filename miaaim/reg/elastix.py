@@ -775,9 +775,9 @@ class Elastix():
         if not out_dir.exists():
             out_dir.mkdir()
         tps = [Path(par_file) for par_file in tps] if tps is not None else self.elastix.tps
-        target_size = tuple(target_size) if target_size is not None else None
-        pad = pad if pad is not None else None
-        trim = trim if trim is not None else None
+        target_size = str(target_size) if target_size is not None else None
+        pad = str(pad) if pad is not None else None
+        trim = str(trim) if trim is not None else None
         # !!! set crops to None for now !!!
         crops = None
          
@@ -797,9 +797,9 @@ class Elastix():
         self.yaml_log['ProcessingSteps'].append(({"Transform":{'fixed':str(in_im),
 															   'out_dir':str(out_dir),
 															   'tps':[ str(i) for i in tps ],
-															   'target_size':str(target_size),
-                                                                'pad':str(pad),
-                                                                'trim':str(trim),
+															   'target_size':target_size,
+                                                                'pad':pad,
+                                                                'trim':trim,
                                                                 'crops':crops,
 															   'out_ext':out_ext}}))
         
