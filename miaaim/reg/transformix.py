@@ -457,6 +457,13 @@ class Transformix():
                 self.self.pad = literal_eval(self.pad)
         			# convert it to tuple from list (command line parser)
                 self.pad = tuple(self.pad)
+		# Check for input list or none
+        if self.trim!=None:
+            # convert to tuple and back to pathlib after logging
+            if isinstance(self.trim,str):
+                self.self.trim = literal_eval(self.trim)
+        			# convert it to tuple from list (command line parser)
+                self.trim = tuple(self.trim)
 
 		#Load images
         niiIn = _import.HDIreader(path_to_data=in_im,
@@ -780,7 +787,7 @@ class Transformix():
 			# Print update
             print('Created temporary directory', tmpdirname)
 			# Iterate through the channels
-            for i in tqdm(range(niiIn.hdi.data.image.shape[2])):
+            for i in range(niiIn.hdi.data.image.shape[2]):
 				# Print update
 				# print('Working on slice '+str(i))
 				# Create a name for a temporary image
@@ -879,7 +886,7 @@ class Transformix():
 			# Print update
             print('Created temporary directory', tmpdirname)
 			# Iterate through the channels
-            for i in tqdm(range(niiIn.hdi.data.image.shape)):
+            for i in range(niiIn.hdi.data.image.shape):
 				# Print update
 				# print('Working on slice '+str(i))
 				# Create a name for a temporary image
