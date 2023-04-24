@@ -454,14 +454,14 @@ class Transformix():
         if self.pad!=None:
             # convert to tuple and back to pathlib after logging
             if isinstance(self.pad,str):
-                self.self.pad = literal_eval(self.pad)
+                self.pad = literal_eval(self.pad)
         			# convert it to tuple from list (command line parser)
                 self.pad = tuple(self.pad)
 		# Check for input list or none
         if self.trim!=None:
             # convert to tuple and back to pathlib after logging
             if isinstance(self.trim,str):
-                self.self.trim = literal_eval(self.trim)
+                self.trim = literal_eval(self.trim)
         			# convert it to tuple from list (command line parser)
                 self.trim = tuple(self.trim)
 
