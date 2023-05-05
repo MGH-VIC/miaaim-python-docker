@@ -8,6 +8,7 @@ import pandas as pd
 import nibabel as nib
 from pathlib import Path
 from skimage.transform import resize
+from skimage.color import rgb2gray
 from ast import literal_eval
 import logging
 
@@ -119,7 +120,7 @@ def CreateHyperspectralImageRectangular(embedding, array_size, coordinates, scal
     # Return the hyperspectral image
     return im
 
-def ExportNifti(image, filename, padding=None, target_size=None):
+def ExportNifti(image, filename, padding=None, target_size=None,grayscale=False):
     """Export processed images resulting from UMAP and
     spatially mapping UMAP, or exporting processed histology images.
 
@@ -159,6 +160,10 @@ def ExportNifti(image, filename, padding=None, target_size=None):
     # Check to see if resizing
     if target_size is not None:
         image = resize(image,target_size)
+    # check for grayscale conversion
+    if grayscale:
+        # convert
+        image = rgb2gray(image)
     # Create nifti object -- transpose axes because of the transformation!
     # Check size
     if len(image.shape) > 2:
@@ -174,7 +179,7 @@ def ExportNifti(image, filename, padding=None, target_size=None):
 
 
 # Add function for exporting UMAP nifti image
-def Export1(image, filename, padding=None, target_size=None):
+def Export1(image, filename, padding=None, target_size=None,grayscale=False):
     """Export processed images resulting from UMAP and
     spatially mapping UMAP, or exporting processed histology images.
 
@@ -225,6 +230,10 @@ def Export1(image, filename, padding=None, target_size=None):
     # Check to see if resizing
     if target_size is not None:
         image = resize(image,target_size)
+    # check for grayscale conversion
+    if grayscale:
+        # convert
+        image = rgb2gray(image)
     # export using io
     _export.HDIexporter(arr=image, out=filename)
     # Print update

@@ -1701,7 +1701,7 @@ class IntraModalityDataset:
         # return connect_dict
 
     # Add function for exporting UMAP nifti image
-    def Export(self, output_dir, suffix="_processed.nii", padding=None, target_size=None):
+    def Export(self, output_dir, suffix="_processed.nii", padding=None, target_size=None,grayscale=False):
         """Export processed images resulting from UMAP and
         spatially mapping UMAP, or exporting processed histology images.
 
@@ -1724,7 +1724,8 @@ class IntraModalityDataset:
         self.yaml_log['ProcessingSteps'].append({"Export":{'output_dir':str(output_dir),
                                     'suffix':suffix,
                                     'padding':str(padding),
-                                    'target_size':str(target_size)}})
+                                    'target_size':str(target_size),
+                                    'grayscale':grayscale}})
 
         # Create dictionary with connected file names
         connect_dict = {}
@@ -1748,11 +1749,11 @@ class IntraModalityDataset:
                 # Otherwise export the image
                 else:
                     # Export the original image
-                    Export1(hdi_imp.hdi.data.image, im_name, padding, target_size)
+                    Export1(hdi_imp.hdi.data.image, im_name, padding, target_size,grayscale)
             # Otherwise export the processed image
             else:
                 # Use utils export nifti function
-                Export1(hdi_imp.hdi.data.processed_image, im_name, padding, target_size)
+                Export1(hdi_imp.hdi.data.processed_image, im_name, padding, target_size,grayscale)
             # Add exported file names to class object -- connect input file name with the exported name
             connect_dict.update({f: im_name})
             # update the object padding and target size
@@ -2284,7 +2285,7 @@ class HDIpreprocessing(IntraModalityDataset):
                          **kwargs)
 
 
-    def ExportNifti1(self, output_dir=None, padding=None, target_size=None):
+    def ExportNifti1(self, output_dir=None, padding=None, target_size=None,grayscale=False):
 
         logging.info("ExportNifti1: exporting processed image to nifti format")
         # check for output_dir
@@ -2297,9 +2298,10 @@ class HDIpreprocessing(IntraModalityDataset):
         # run super method
         super().ExportNifti1(output_dir=output_dir,
                             padding=padding,
-                            target_size=target_size)
+                            target_size=target_size,
+                            grayscale=grayscale)
 
-    def Export(self, output_dir=None, suffix="_processed.nii", padding=None, target_size=None):
+    def Export(self, output_dir=None, suffix="_processed.nii", padding=None, target_size=None,grayscale=False):
 
         logging.info("Export: exporting processed image")
         # check for output_dir
@@ -2313,7 +2315,8 @@ class HDIpreprocessing(IntraModalityDataset):
         super().Export(output_dir=output_dir,
                         suffix=suffix,
                         padding=padding,
-                        target_size=target_size)
+                        target_size=target_size,
+                        grayscale=grayscale)
 
     def ExportMask(self, output_dir=None, suffix="_processed_mask.tiff", padding=None, target_size=None):
 
