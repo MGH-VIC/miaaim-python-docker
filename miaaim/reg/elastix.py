@@ -139,7 +139,7 @@ class ElastixReg():
         self.elastix_dir = elastix_dir        
         
         # now we need to check for landmarks and multichannel
-        if (self.multichannel) and (self.fp is not None):
+        if (self.multichannel) and (self.landmark_p is not None):
             # we must have an intermediate landmark registration
             self.landmark_reg_dir = out_dir.joinpath('landmark_registered')
             # check if exists
@@ -163,7 +163,7 @@ class ElastixReg():
 									 flatten=False,
 									 subsample=False,
 									 method=None,
-									 mask=self.fMask,
+									 mask=None,
 									 save_mem=False,
 									 data=None,
 									 image=None,
@@ -310,7 +310,7 @@ class ElastixReg():
 									 flatten=False,
 									 subsample=False,
 									 method=None,
-									 mask=self.fMask,
+									 mask=None,
 									 save_mem=False,
 									 data=None,
 									 image=None,
