@@ -218,7 +218,7 @@ class IntraModalityDataset:
         self._reduce_reload(subsample=subsample,method=method,**kwargs)
 
     # Create dimension reduction method with UMAP
-    def RunUMAP(self, import_args={'subsample':True,'method':'default'}, **kwargs):
+    def RunUMAP(self, import_args={'subsample':True,'method':'default'},channels=None, **kwargs):
         """Creates an embedding of high-dimensional imaging data. Each
         pixel will be represented by its coordinates in the UMAP projection
         space.
@@ -242,10 +242,16 @@ class IntraModalityDataset:
 
         # update yaml logger
         self.yaml_log['ProcessingSteps'].append({"RunUMAP":{'import_args':{**import_args},
+                                        'channels':channels,
                                         **kwargs}})
 
         # validate reload commands
         self._validate_reduce(**import_args)
+        
+        # check for deep slicing of images (down to pixel table level)
+        if channels is not None:
+            # deep slice
+            self.DeepSlice(channels=channels)
 
         # Create a dictionary to store indices in
         file_idx = {}
@@ -317,7 +323,7 @@ class IntraModalityDataset:
         self.umap_object = base
 
     # Create dimension reduction method with UMAP
-    def RunParametricUMAP(self, import_args={'subsample':True,'method':'default'}, **kwargs):
+    def RunParametricUMAP(self, import_args={'subsample':True,'method':'default'}, channels=None, **kwargs):
         """Creates an embedding of high-dimensional imaging data using
         UMAP parametrized by neural network. Each
         pixel will be represented by its coordinates in the UMAP projection
@@ -342,10 +348,16 @@ class IntraModalityDataset:
 
         # update yaml logger
         self.yaml_log['ProcessingSteps'].append({"RunParametricUMAP":{'import_args':{**import_args},
+                                        'channels':channels,
                                         **kwargs}})
 
         # validate reload commands
         self._validate_reduce(**import_args)
+        
+        # check for deep slicing of images (down to pixel table level)
+        if channels is not None:
+            # deep slice
+            self.DeepSlice(channels=channels)
 
         # Create a dictionary to store indices in
         file_idx = {}
@@ -2237,6 +2249,22 @@ class HDIpreprocessing(IntraModalityDataset):
         # update logger
         logging.info(f'\n')
         logging.info("PROCESSING DATA")
+        
+    def RunUMAP(
+        self, import_args={'subsample':True,'method':'default'}, channels=None, **kwargs
+    ):
+        logging.info("RunUMAP: computing UMAP embedding")
+
+        # run super method
+        super().RunUMAP(import_args=import_args, channels=channels, **kwargs)        
+    
+    def RunParametricUMAP(
+        self, import_args={'subsample':True,'method':'default'}, channels=None, **kwargs
+    ):
+        logging.info("RunParametricUMAP: computing parametric UMAP embedding")
+
+        # run super method
+        super().RunParametricUMAP(import_args=import_args, channels=channels, **kwargs) 
 
     def RunOptimalUMAP(
         self, import_args={'subsample':True,'method':'default'}, dim_range='(1,11)', landmarks=3000, export_diagnostics=True, output_dir=None, n_jobs=1, **kwargs
