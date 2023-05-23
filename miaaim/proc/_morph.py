@@ -33,14 +33,14 @@ def MedFilter(image, filter_size, parallel=False):
             image,
             extra_keywords={
                 # Set size of circular filter
-                "selem": skimage.morphology.disk(filter_size)
+                "footprint": skimage.morphology.disk(filter_size)
             },
         )
     # Use single processor
     else:
         # Otherwise use only singe processor
         filtered_im = skimage.filters.median(
-            image, selem=skimage.morphology.disk(filter_size)
+            image, footprint=skimage.morphology.disk(filter_size)
         )
 
     # Return the filtered image
