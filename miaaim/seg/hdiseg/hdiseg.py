@@ -28,6 +28,8 @@ import sys
 import miaaim
 from miaaim.cli.seg.hdiseg import _parse
 
+import matplotlib.pyplot as plt
+
 
 # set constants according to CellProfiler convention
 UN_INTENSITY = "Intensity"
@@ -561,10 +563,16 @@ def filter_on_border(image, labeled_image, image_mask=False, mask=None, exclude_
             # The operation below gets the mask pixels that are on the border of the mask
             # The erosion turns all pixels touching an edge to zero. The not of this
             # is the border + formerly masked-out pixels.
+            
+            # This has been adapted so that an labels within the masked
+            # region are kept, while the labels outside of the binary
+            # mask are removed - JH
             mask_border = np.logical_not(
                 scipy.ndimage.binary_erosion(mask)
             )
-            mask_border = np.logical_and(mask_border, mask)
+            
+            # mask_border = np.logical_and(mask_border, mask)
+            
             border_labels = labeled_image[mask_border]
             border_labels = border_labels.flatten()
             histogram = scipy.sparse.coo_matrix(
@@ -863,9 +871,22 @@ def NuclearSegmentation(
     unedited_labels = labeled_image.copy()
 
     if exclude_border_labels:
+        # check for mask
+        if mask is not None:
+            # set image mask to true
+            image_mask=True
+        else:
+            # otherwise false
+            image_mask = False
         # Filter out objects touching the border or mask
         border_excluded_labeled_image = labeled_image.copy()
-        labeled_image = filter_on_border(nuclear_image, labeled_image)
+        labeled_image = filter_on_border(
+            nuclear_image, 
+            labeled_image,
+            image_mask=image_mask, 
+            mask=mask, 
+            exclude_border_objects=True
+            )
         border_excluded_labeled_image[labeled_image > 0] = 0
         # create outline of labeled image of border excluded labels
         outline_border_excluded_image = centrosome.outline.outline(
@@ -1302,13 +1323,14 @@ class HDISegmentation:
 
         # check if it exists already
         if Path(log_name).exists():
-            # remove it if not resuming
+            # remove it
             Path(log_name).unlink()
         # configure log
         logging.basicConfig(filename=log_name,
-                                encoding='utf-8',
-                                level=logging.DEBUG,
-                                format=FORMAT)
+                            encoding='utf-8',
+                            level=logging.INFO,
+                            format=FORMAT,
+                            force=True)
 
         # get logger
         logger = logging.getLogger()
@@ -1317,12 +1339,11 @@ class HDISegmentation:
         handler.setLevel(logging.DEBUG)
         # handler.setFormatter(FORMAT)
         logger.addHandler(handler)
-
         # command to capture print functions to log
         print = logger.info
-        self.log_name = None
-        self.logger = None
-
+        
+        self.log_name = log_name
+        self.logger = logger
 
         # create name of shell command
         sh_name = os.path.join(
@@ -1332,14 +1353,13 @@ class HDISegmentation:
         self.sh_name = sh_name
 
         # set other class attributes
-        self.image_mask = skimage.io.imread(Path(image_mask)) if image_mask is not None else None
+        self.image_mask_name = str(Path(image_mask)) if image_mask is not None else None
         self.nuclear_index = nuclear_index
         self.membrane_index = membrane_index
         self.background_index = background_index
 
         # other attributes to be filled
         self.probabilities_image = None
-        self.mask = None
         self.nuclear_segmentation_qc_image = None
         self.labeled_image = None
         self.object_count = None
@@ -1388,8 +1408,8 @@ class HDISegmentation:
         self.yaml_log.update({'MODULE':"Segmentation"})
         self.yaml_log.update({'METHOD':"hdseg"})
         self.yaml_log.update({'ImportOptions':{'probabilities_dir':str(self.probabilities_dir),
-                                                'probabilities_image':str(self.probabilities_image),
-                                                'image_mask':self.image_mask,
+                                                'probabilities_image':str(self.image_name_full),
+                                                'image_mask':self.image_mask_name,
                                                 'nuclear_index':self.nuclear_index,
                                                 'membrane_index':self.membrane_index,
                                                 'background_index':self.background_index,
@@ -1398,11 +1418,13 @@ class HDISegmentation:
                                                 'name':self.name,
                                                 'qc':qc}})
 
-
+        # read the image and add
+        self.image_mask = skimage.io.imread(Path(self.image_mask_name)).astype('bool') if image_mask is not None else None
+        self.mask = self.image_mask
         # update logger
         logging.info(f'\n')
         logging.info("PROCESSING DATA")
-
+        
 
     def NuclearSegmentation(
             self,
