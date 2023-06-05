@@ -21,9 +21,9 @@ from miaaim.cli.seg.hdiseg import _parse
 
 
 
-dire = "/Users/joshuahess/Desktop/test/segmentation/imc/hdiseg-ilastik"
-a = check_image_dir(dir=dire)
-a
+# dire = "/Users/joshuahess/Desktop/test/segmentation/imc/hdiseg-ilastik"
+# a = check_image_dir(dir=dire)
+# a
 
 
 def check_image_dir(dir,endings=["mask.","UMAP."]):
@@ -71,9 +71,6 @@ def check_image_dir(dir,endings=["mask.","UMAP."]):
 
     # return the list
     return f_list
-
-
-
 
 
 def SearchDir(ending = ".txt",dir=None):
