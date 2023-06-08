@@ -21,9 +21,36 @@ from miaaim.cli.seg.hdiseg import _parse
 
 
 
-# dire = "/Users/joshuahess/Desktop/test/segmentation/imc/hdiseg-ilastik"
-# a = check_image_dir(dir=dire)
-# a
+# =============================================================================
+# root = Path("/Users/joshuahess/Desktop/ROI010_PROSTATE_TMA001")
+# x = list(range(1,62))
+# y = list(range(1,702))
+# 
+# x = pd.DataFrame(x)
+# y = pd.DataFrame(y)
+# 
+# x.to_csv("/Users/joshuahess/Desktop/imc.csv",index=None)
+# y.to_csv("/Users/joshuahess/Desktop/msi.csv",index=None)
+# 
+# test = HDIquantification(root_folder=root,
+#             masks=[ root.joinpath("segmentation/imc/hdiseg-ilastik/ROI010_PROSTATE_TMA001_core_probabilities_mask.tiff") ],
+#             images=[ root.joinpath("preprocessing/imc/ROI010_PROSTATE_TMA001_core.ome.tiff"),
+#                     root.joinpath("registration/msi-imc/transformix/ROI010_PROSTATE_TMA001_result.nii")
+#                     ],       
+#             channel_names=[Path("/Users/joshuahess/Desktop/imc-markers.csv"),
+#                            Path("/Users/joshuahess/Desktop/msi-markers.csv")],
+#             names=["imc", "msi"],
+#             probabilities_method="ilastik",
+#             segmentation_method="hdiseg",
+#             mask_props=None,
+#             intensity_props=["intensity_mean"])
+#     
+# 
+# test.Quantify(output=None)
+# test.QC()
+# 
+# =============================================================================
+
 
 
 def check_image_dir(dir,endings=["mask.","UMAP."]):
@@ -113,7 +140,7 @@ def gini_index(mask, intensity):
 def median_intensity(mask, intensity):
     return np.median(intensity[mask])
 
-def MaskChannel(mask_loaded, image_loaded_z, intensity_props=["mean_intensity"]):
+def MaskChannel(mask_loaded, image_loaded_z, intensity_props=["intensity_mean"]):
     """Function for quantifying a single channel image
 
     Returns a table with CellID according to the mask and the mean pixel intensity
@@ -174,13 +201,13 @@ def PrepareData(image,z):
     #Check to see if image tif(f)
     if image_path.suffix == '.tiff' or image_path.suffix == '.tif':
         #Check to see if the image is ome.tif(f)
-        if  image.endswith(('.ome.tif','.ome.tiff')):
+        if  str(image_path).endswith(('.ome.tif','.ome.tiff')):
             #Read the image
-            image_loaded_z = skimage.io.imread(image,img_num=z,plugin='tifffile')
+            image_loaded_z = skimage.io.imread(image_path,img_num=z,plugin='tifffile')
             #print('OME TIF(F) found')
         else:
             #Read the image
-            image_loaded_z = skimage.io.imread(image,img_num=z,plugin='tifffile')
+            image_loaded_z = skimage.io.imread(image_path,img_num=z,plugin='tifffile')
             #print('TIF(F) found')
             # Remove extra axis
             #image_loaded = image_loaded.reshape((image_loaded.shape[1],image_loaded.shape[3],image_loaded.shape[4]))
@@ -188,7 +215,7 @@ def PrepareData(image,z):
     #Check to see if image is hdf5
     elif image_path.suffix == '.h5' or image_path.suffix == '.hdf5':
         #Read the image
-        f = h5py.File(image,'r+')
+        f = h5py.File(image_path,'r+')
         #Get the dataset name from the h5 file
         dat_name = list(f.keys())[0]
         ###If the hdf5 is exported from ilastik fiji plugin, the dat_name will be 'data'
@@ -207,7 +234,7 @@ def PrepareData(image,z):
     return image_loaded_z
 
 
-def MaskZstack(masks_loaded,image,channel_names_loaded, mask_props=None, intensity_props=["mean_intensity"]):
+def MaskZstack(masks_loaded,image,channel_names_loaded, mask_props=None, intensity_props=["intensity_mean"]):
     """This function will extract the stats for each cell mask through each channel
     in the input image
 
@@ -287,10 +314,10 @@ def MaskZstack(masks_loaded,image,channel_names_loaded, mask_props=None, intensi
         mask_dict = {}
         # Mean intensity is default property, stored without suffix
         mask_dict.update(
-            zip(channel_names_loaded, [x["mean_intensity"] for x in dict_of_chan[nm]])
+            zip(channel_names_loaded, [x["intensity_mean"] for x in dict_of_chan[nm]])
         )
         # All other properties are suffixed with their names
-        for prop_n in set(dict_of_chan[nm][0].keys()).difference(["mean_intensity"]):
+        for prop_n in set(dict_of_chan[nm][0].keys()).difference(["intensity_mean"]):
             mask_dict.update(
                 zip([f"{n}_{prop_n}" for n in channel_names_loaded], [x[prop_n] for x in dict_of_chan[nm]])
             )
@@ -304,7 +331,7 @@ def MaskZstack(masks_loaded,image,channel_names_loaded, mask_props=None, intensi
 
 
 
-def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intensity_props=["mean_intensity"]):
+def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intensity_props=["intensity_mean"]):
     """Function for extracting single cell information from input
     path containing single-cell masks, z_stack path, and channel_names path."""
 
@@ -313,7 +340,7 @@ def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intens
 
     # check for channel names type
     if isinstance(channel_names,list):
-        channel_names_loaded = channel_names.copy()
+        channel_names_loaded_checked = channel_names.copy()
         
     # otherwise try to read csv file
     else:
@@ -336,10 +363,10 @@ def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intens
             #Check for unique value
             if channel_names_loaded_list.count(val) > 1:
                 #If unique count greater than one, add suffix
-                channel_names_loaded_checked.append(val + "_"+ str(channel_names_loaded_list[:idx].count(val) + 1))
+                channel_names_loaded_checked.append(str(val) + "_"+ str(channel_names_loaded_list[:idx].count(val) + 1))
             else:
                 #Otherwise, leave channel name
-                channel_names_loaded_checked.append(val)
+                channel_names_loaded_checked.append(str(val))
 
     #Clear small memory amount by clearing old channel names
     channel_names_loaded, channel_names_loaded_list = None, None
@@ -368,98 +395,61 @@ def ExtractSingleCells(masks,image,channel_names,output, mask_props=None, intens
                             )
 
 
-
-def MultiExtractSingleCells(masks,images,channel_names,output,mask_props=None, intensity_props=["mean_intensity"]):
+def MultiExtractSingleCells(masks,images,channel_names,output,mask_props=None, intensity_props=["intensity_mean"]):
     """Function for iterating over a list of z_stacks and output locations to
     export single-cell data from image masks"""
 
+
+    # create indexer for output directories
+    o = 0
     # iterate through z stacks and channel csvs to export data
     for i in range(len(images)):
 
         print("Extracting single-cell data for "+str(images[i])+'...')
 
         #Run the ExtractSingleCells function for this image
-        ExtractSingleCells(masks,images[i],channel_names[i],output, mask_props=mask_props, intensity_props=intensity_props)
+        ExtractSingleCells(masks,images[i],channel_names[i],output[o], mask_props=mask_props, intensity_props=intensity_props)
 
         #Print update
         im_full_name = os.path.basename(images[i])
         im_name = im_full_name.split('.')[0]
         print("Finished "+str(im_name))
-
+        # update the indexer for output
+        o = o + 1
 
 
 class HDIquantification:
 
     def __init__(
             self,
-            masks=None,
-            root_folder=None,   
-            mask_dir="imc/hdiseg-ilastik",
-            images=None,
-            image_dir="preprocessing/imc",         
+            root_folder,
+            masks,
+            images,       
             channel_names=None,
-            output=None,
+            names=["imc"],
+            probabilities_method="ilastik",
+            segmentation_method="hdiseg",
             mask_props=None,
-            segmentation_method=None,
-            probabilities_method=None,
-            intensity_props=["mean_intensity"],
+            intensity_props=["intensity_mean"],
             ):
-        """
-        
-
-        Parameters
-        ----------
-        masks : TYPE, optional
-            DESCRIPTION. The default is None.
-        root_folder : TYPE, optional
-            DESCRIPTION. The default is None.
-        mask_dir : TYPE, optional
-            DESCRIPTION. The default is "imc/hdiseg-ilastik".
-        images : TYPE, optional
-            DESCRIPTION. The default is None.
-        image_dir : TYPE, optional
-            DESCRIPTION. The default is "preprocessing/imc".
-        channel_names : TYPE, optional
-            DESCRIPTION. The default is None.
-        output : TYPE, optional
-            DESCRIPTION. The default is None.
-        mask_props : TYPE, optional
-            DESCRIPTION. The default is None.
-        segmentation_method : TYPE, optional
-            DESCRIPTION. The default is None.
-        probabilities_method : TYPE, optional
-            DESCRIPTION. The default is None.
-        intensity_props : TYPE, optional
-            DESCRIPTION. The default is ["mean_intensity"].
-         : TYPE
-            DESCRIPTION.
-
-        Raises
-        ------
-        Exception
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        """
         
         # create logger format
         FORMAT = '%(asctime)s | [%(pathname)s:%(lineno)s - %(funcName)s() ] | %(message)s'
 
         # check for root folder name
-        if root_folder is not None:
-            # make pathlib
-            root_folder = Path(root_folder)
-        else:
-            # use current working directory
-            root_folder = Path(os.getcwd())
-        self.root_folder=root_folder       
-   
-        # create names
-        self.mask_dir = root_folder.joinpath(mask_dir)
-                
+        root_folder = Path(root_folder)
+        self.root_folder=root_folder
+
+        # get paths
+        self.masks = [Path(m) for m in masks]
+        self.images = [ Path(im) for im in images ]            
+        self.channel_names = [ Path(c) for c in channel_names ] if channel_names is not None else [None]*len(images)
+        self.names = names
+        self.probabilities_method = probabilities_method
+        self.segmentation_method = segmentation_method
+        self.mask_props = mask_props
+        self.intensity_props = intensity_props
+        
         # create direectory specific for process
         quant_dir = root_folder.joinpath("quantification")
         # check if exists already
@@ -467,13 +457,7 @@ class HDIquantification:
             # make it
             quant_dir.mkdir()
         # create direectory specific for process
-        quant_dir = quant_dir.joinpath(self.name)
-        # check if exists already
-        if not quant_dir.exists():
-            # make it
-            quant_dir.mkdir()
-        # create direectory specific for process
-        quant_dir = quant_dir.joinpath(f"{self.probabilities_method}")
+        quant_dir = quant_dir.joinpath(f"{self.segmentation_method}-{self.probabilities_method}")
         # check if exists already
         if not quant_dir.exists():
             # make it
@@ -498,7 +482,7 @@ class HDIquantification:
         # create name of shell command
         yaml_name = os.path.join(
             Path(pars_dir),
-            f"miaaim-quant"+f'-{self.probabilities_method}-{self.name}'+".yaml"
+            f"miaaim-quant-{self.segmentation_method}-{self.probabilities_method}"+".yaml"
             )
         # add to self
         self.yaml_name = yaml_name
@@ -517,15 +501,11 @@ class HDIquantification:
         if not qc_quant_dir.exists():
             # make it
             qc_quant_dir.mkdir()
-        # create direectory specific for process
-        qc_quant_dir = qc_quant_dir.joinpath(f"{self.name}")
-        # check if exists already
-        if not qc_quant_dir.exists():
-            # make it
-            qc_quant_dir.mkdir()
         self.qc_quant_dir = qc_quant_dir
 
-        qc_quant_name_dir = qc_quant_dir.joinpath(f"quantification-{self.probabilities_method}")
+        qc_quant_name_dir = qc_quant_dir.joinpath(
+            f"{self.segmentation_method}-{self.probabilities_method}"
+            )
         # check if exists already
         if not qc_quant_name_dir.exists():
             # make it
@@ -542,7 +522,7 @@ class HDIquantification:
         # create name of logger
         log_name = os.path.join(
             Path(prov_dir),
-            f"miaaim-quant"+f'-{self.probabilities_method}-{self.name}'+".log"
+            f"miaaim-quant"+f'-{self.segmentation_method}-{self.probabilities_method}'+".log"
             )
 
         # start yaml log
@@ -558,7 +538,8 @@ class HDIquantification:
         logging.basicConfig(filename=log_name,
                                 encoding='utf-8',
                                 level=logging.DEBUG,
-                                format=FORMAT)
+                                format=FORMAT,
+                                force=True)
 
         # get logger
         logger = logging.getLogger()
@@ -568,84 +549,47 @@ class HDIquantification:
         # handler.setFormatter(FORMAT)
         logger.addHandler(handler)
 
+        # create name of shell command
+        sh_name = os.path.join(Path(prov_dir),"miaaim-quant"+f'-{self.segmentation_method}-{self.probabilities_method}'+".sh")
+        
         # command to capture print functions to log
-        print = logger.info
-        self.log_name = None
-        self.logger = None       
+        self.log_name = log_name
+        self.logger = logger
+        self.sh_name = sh_name
+        self.yaml_name = yaml_name
 
+        
         # print first log
         logging.info("MIAAIM QUANTIFICATION")
         logging.info(f'MIAAIM VERSION {miaaim.__version__}')
         logging.info(f'METHOD: HDIquantification')
         logging.info(f'ROOT FOLDER: {self.root_folder}')
         logging.info(f'PROVENANCE FOLDER: {self.prov_dir}')
-        logging.info(f'QC FOLDER: {self.qc_seg_name_dir} \n')
+        logging.info(f'QC FOLDER: {self.qc_quant_name_dir} \n')
 
         # Get file extensions for tiff probability images
-        tiff_ext = [".tif", ".tiff"]
+        # tiff_ext = [".tif", ".tiff"]
         # get file extensions for data going to quantification
-        image_ext = [".hdf5",".h5",".nii"]
-
-        # check for input image
-        logging.info("Parsing segmentation mask...")
-        if masks is None:
-            # search directory for probability image
-            fs = SearchDir(ending=tiff_ext[0],dir=self.mask_dirs)
-            if not len(fs) > 0:
-                # try other tiff extension
-                fs = SearchDir(ending=tiff_ext[1],dir=self.mask_dirs)
-            # make sure there are not more than one file in directory
-            if len(fs)>1:
-                raise Exception(f'More than one TIFF found in {str(self.mask_dir)}')
-            # get image
-            masks = fs
-        else:
-            masks = [Path(m) for m in masks]
-
-        # create names
-        self.image_dir = root_folder.joinpath(image_dir)
-        # check for input image
-        logging.info("Parsing images...")
-        if images is None:
-            # search directory for input image
-            fs = check_image_dir(dir=self.image_dir)            
-            if not len(fs) > 0:
-                # try other tiff extension
-                raise Exception(f'No images found in {str(self.image_dir)}')
-            # make sure there are not more than one file in directory
-            if len(fs)>1:
-                raise Exception(f'More than one image found in {str(self.image_dir)}')
-            # get image
-            images = fs
-        else:
-            images = [Path(im) for im in images]            
-                
-        # initialize class attributes
-        self.masks = masks
-        self.images = images
-        self.channel_names = channel_names
-        self.output = output
-        self.mask_props = mask_props
-        self.intensity_props = intensity_props
+        # image_ext = [".hdf5",".h5",".nii"]
         
         # update yaml file
         self.yaml_log.update({'MODULE':"Quantification"})
         self.yaml_log.update({'METHOD':"hdiquant"})
-        self.yaml_log.update({'ImportOptions':{'probabilities_dir':str(self.probabilities_dir),
-                                                'probabilities_image':str(self.probabilities_image),
-                                                'image_mask':self.image_mask,
-                                                'nuclear_index':self.nuclear_index,
-                                                'membrane_index':self.membrane_index,
-                                                'background_index':self.background_index,
-                                                'root_folder':str(self.root_folder),
-                                                'name':self.name}})
-
+        self.yaml_log.update({'ImportOptions':{'root_folder':str(self.root_folder),
+                                                'masks':[ str(m) for m in self.masks ],
+                                                'images':[ str(i) for i in self.images ],
+                                                'channel_names':[ str(c) for c in self.channel_names ] if self.channel_names is not None else None,
+                                                'names':names,
+                                                'probabilities_method':self.probabilities_method,
+                                                'segmentation_method':self.segmentation_method,
+                                                'mask_props':self.mask_props,
+                                                'intensity_props':self.intensity_props}})
 
         # update logger
         logging.info(f'\n')
         logging.info("PROCESSING DATA")        
         
-    def Quantify(self):
+    def Quantify(self, output=None):
         """
         Quantify single-cell measurements using regionprops.
 
@@ -661,12 +605,27 @@ class HDIquantification:
         self.yaml_log.update({'ProcessingSteps':[]})
         self.yaml_log['ProcessingSteps'].append("Quantify")
         
+        # check for output directory
+        if output is None:
+            # set output based on input names and quant directory
+            output = [ self.quant_dir.joinpath(n) for n in self.names ]
+            # check if exists
+            for o in output:
+                if not o.exists():
+                    # warn
+                    logging.warning("Creating directories for quantification export")
+                    # create directory
+                    o.mkdir()
+        else:
+            # otherwise set as input parameter
+            output = [output]*len(self.images)
+        
         #Run the ExtractSingleCells function for this image
         MultiExtractSingleCells(
             self.masks,
             self.images,
             self.channel_names,
-            self.output, 
+            output, 
             mask_props=self.mask_props, 
             intensity_props=self.intensity_props
             )
@@ -705,44 +664,6 @@ class HDIquantification:
         self._exportSH()
         # close the logger
         self.logger.handlers.clear()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
