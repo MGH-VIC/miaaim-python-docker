@@ -10,4 +10,4 @@ from miaaim.seg.hdiseg import _yaml_hdiseg
 args = _parse.ParseHDIsegYAML()
 
 # Run the RunHDIsegmentationYAML function
-_yaml_ilastik.RunHDIsegmentationYAML(**args)
+_yaml_hdiseg.RunHDIsegmentationYAML(**args)

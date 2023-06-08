@@ -17,7 +17,7 @@ import sys
 
 # import custom modules
 import miaaim
-from miaaim.cli.seg.hdiseg import _parse
+from miaaim.cli.quant import _parse
 
 
 

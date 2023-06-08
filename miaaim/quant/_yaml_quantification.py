@@ -12,7 +12,7 @@ from miaaim.quant import quantificaton
 
 
 # Define parsing function
-def RunQuantYAML(pars,force_export):
+def RunQuantificationYAML(pars):
     """Parsing YAML file for HDISegmentation workflow.
     """
 

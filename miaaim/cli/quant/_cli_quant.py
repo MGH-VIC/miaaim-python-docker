@@ -4,10 +4,10 @@
 
 # Import custom modules
 from miaaim.cli.quant import _parse
-from miaaim.quant import quantification
+from miaaim.quant import _yaml_quantification
 
 # Parse the command line arguments
-args = _parse.ParseHDIsegYAML()
+args = _parse.ParseHDIquantYAML()
 
 # Run the RunHDIsegmentationYAML function
-_yaml_ilastik.RunHDIsegmentationYAML(**args)
+_yaml_quantification.RunQuantificationYAML(**args)

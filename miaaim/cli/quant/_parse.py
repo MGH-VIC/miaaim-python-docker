@@ -2,7 +2,7 @@
 import argparse
 
 
-def ParseHDIsegYAML():
+def ParseHDIquantYAML():
    """Function for parsing command line arguments for input to quantification"""
 
 #if __name__ == '__main__':
