@@ -1085,7 +1085,7 @@ class IntraModalityDataset:
                     self.set_dict[f].hdi.data.sub_coordinates = None
 
                 # Create a mask based off array size and current UMAP data points
-                data = np.ones(len(inv_pix), dtype=np.bool)
+                data = np.ones(len(inv_pix), dtype=np.bool_)
                 # Create row data for scipy coo matrix (-1 index for 0-based python)
                 row = np.array([inv_pix[c][1] - 1 for c in range(len(inv_pix))])
                 # Create row data for scipy coo matrix (-1 index for 0-based python)
@@ -1232,7 +1232,7 @@ class IntraModalityDataset:
                     ] = 0
                     # Turn the processed mask back to sparse matrix
                     hdi_imp.hdi.data.processed_image = scipy.sparse.coo_matrix(
-                        hdi_imp.hdi.data.processed_image, dtype=np.bool
+                        hdi_imp.hdi.data.processed_image, dtype=np.bool_
                     )
 
     def InvertMask(self):
@@ -1248,7 +1248,7 @@ class IntraModalityDataset:
             hdi_imp.hdi.data.processed_image = ~hdi_imp.hdi.data.processed_image.toarray()
             # Turn the processed mask back to sparse matrix
             hdi_imp.hdi.data.processed_image = scipy.sparse.coo_matrix(
-                hdi_imp.hdi.data.processed_image, dtype=np.bool
+                hdi_imp.hdi.data.processed_image, dtype=np.bool_
             )
 
     def MedianFilter(self, filter_size, parallel=False):

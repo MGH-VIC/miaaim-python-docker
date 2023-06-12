@@ -87,7 +87,7 @@ def Thresholding(image, type, channel=None, thresh_value=None, correction=1.0):
     # Create a mask from the threshold value
     thresh_img = image < thresh_value
     # Convert the mask to a boolean sparse matrix
-    return scipy.sparse.coo_matrix(thresh_img, dtype=np.bool)
+    return scipy.sparse.coo_matrix(thresh_img, dtype=np.bool_)
 
 
 def Opening(mask, disk_size, parallel=False):
@@ -98,7 +98,7 @@ def Opening(mask, disk_size, parallel=False):
     """
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -126,7 +126,7 @@ def Opening(mask, disk_size, parallel=False):
         )
 
     # Convert the mask back to scipy sparse matrix for storage
-    return scipy.sparse.coo_matrix(mask, dtype=np.bool)
+    return scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
 
 def Closing(mask, disk_size, parallel=False):
@@ -137,7 +137,7 @@ def Closing(mask, disk_size, parallel=False):
     """
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -165,14 +165,14 @@ def Closing(mask, disk_size, parallel=False):
         )
 
     # Convert the mask back to scipy sparse matrix for storage
-    return scipy.sparse.coo_matrix(mask, dtype=np.bool)
+    return scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
 
 def MorphFill(mask):
     """Morphological filling on a binary mask. Fills holes"""
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -184,13 +184,13 @@ def MorphFill(mask):
     # Filling in the mask
     mask = scipy.ndimage.binary_fill_holes(mask)
     # Return the mask
-    return scipy.sparse.coo_matrix(mask, dtype=np.bool)
+    return scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
 def ConvexHull(mask):
     """Create convex hull of masked image"""
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -202,13 +202,13 @@ def ConvexHull(mask):
     # Create convex hull
     mask = skimage.morphology.convex_hull_image(mask)
     # Return the mask
-    return scipy.sparse.coo_matrix(mask, dtype=np.bool)
+    return scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
 # def MaskBoundary(mask):
 #     """Extract boundary of mask for qc purposes.
 #     """
 #     # Ensure that the image is boolean
-#     if not mask.dtype is np.dtype(np.bool):
+#     if not mask.dtype is np.dtype(np.bool_):
 #         # Raise an exception
 #         raise (Exception("Mask must be a boolean array!"))
 #
@@ -229,7 +229,7 @@ def MaskBoundary(mask):
     """
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -247,7 +247,7 @@ def NonzeroSlice(mask, original):
     region around mask"""
 
     # Ensure that the image is boolean
-    if not mask.dtype is np.dtype(np.bool):
+    if not mask.dtype is np.dtype(np.bool_):
         # Raise an exception
         raise (Exception("Mask must be a boolean array!"))
 
@@ -269,4 +269,4 @@ def NonzeroSlice(mask, original):
     mask = mask[minx:maxx, miny:maxy]
 
     # Return the original image and then the mask as a sparse matrix
-    return original, scipy.sparse.coo_matrix(mask, dtype=np.bool)
+    return original, scipy.sparse.coo_matrix(mask, dtype=np.bool_)

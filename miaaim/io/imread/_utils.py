@@ -72,7 +72,7 @@ def SubsetCoordinates(
         # Use the indices to subsample coordinates
         sub_coords = [coords[c] for c in idx]
         # Create data with True values same length as sub_coords for scipy coo matrix
-        data = np.ones(len(sub_coords), dtype=np.bool)
+        data = np.ones(len(sub_coords), dtype=np.bool_)
 
         # Create row data for scipy coo matrix (-1 index for 0-based python)
         row = np.array([sub_coords[c][1] - 1 for c in range(len(sub_coords))])
@@ -116,7 +116,7 @@ def SubsetCoordinates(
         row = np.arange(min_nh, max_nh, grdh)
         col = np.arange(min_nw, max_nw, grdw)
         # Create data with True values same length as sub_coords for scipy coo matrix
-        data = np.ones(len(row) * len(col), dtype=np.bool)
+        data = np.ones(len(row) * len(col), dtype=np.bool_)
         # Create meshgrid from the grid coordinates
         row, col = np.meshgrid(row, col)
 
@@ -151,7 +151,7 @@ def SubsetCoordinates(
         sub_coords = rand_sub_coords + sub_coords
 
         # Create data with True values same length as sub_coords for scipy coo matrix
-        data = np.ones(len(sub_coords), dtype=np.bool)
+        data = np.ones(len(sub_coords), dtype=np.bool_)
 
         # Create row data for scipy coo matrix (-1 index for 0-based python)
         row = np.array([sub_coords[c][1] - 1 for c in range(len(sub_coords))])
@@ -184,7 +184,7 @@ def SubsetCoordinates(
         row = np.arange(min_nh, max_nh, grdh)
         col = np.arange(min_nw, max_nw, grdw)
         # Create data with True values same length as sub_coords for scipy coo matrix
-        data = np.ones(len(row) * len(col), dtype=np.bool)
+        data = np.ones(len(row) * len(col), dtype=np.bool_)
         # Create meshgrid from the grid coordinates
         row, col = np.meshgrid(row, col)
 
@@ -205,7 +205,7 @@ def SubsetCoordinates(
         col = np.array([sub_coords[c][0] - 1 for c in range(len(sub_coords))])
 
         # Create data with True values same length as sub_coords for scipy coo matrix
-        data = np.ones(len(sub_coords), dtype=np.bool)
+        data = np.ones(len(sub_coords), dtype=np.bool_)
 
     # Otherwise raise an error
     else:
@@ -252,7 +252,7 @@ def FlattenZstack(z_stack, z_stack_shape, mask, subsample=True, method="default"
     # Check to see if using a mask to extract only a subregion
     if mask is None:
         # Create numpy boolean mask array with cols = channels an rows = pixels
-        mask = np.ones([int(z_stack_shape[0]), z_stack_shape[1]], dtype=np.bool)
+        mask = np.ones([int(z_stack_shape[0]), z_stack_shape[1]], dtype=np.bool_)
 
     else:
         # Check to see if the mask is a path (string)
@@ -265,7 +265,7 @@ def FlattenZstack(z_stack, z_stack_shape, mask, subsample=True, method="default"
             mask = mask.toarray()
 
         # Ensure that the mask is boolean
-        mask = np.array(mask, dtype=np.bool)
+        mask = np.array(mask, dtype=np.bool_)
 
     # Get the coordinates where the mask is
     where = np.where(mask)

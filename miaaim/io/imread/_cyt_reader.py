@@ -92,7 +92,7 @@ class CYTreader:
                 ##############Change in future to take arbitrary masks not just tiff??################
                 mask = skimage.io.imread(str(mask), plugin="tifffile")
             # Ensure the mask is a sparse boolean array
-            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool)
+            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
         # Add the mask to the class object -- even if it is none. Will not be applied to image yet
         self.data.mask = mask

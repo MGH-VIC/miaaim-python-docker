@@ -86,7 +86,7 @@ class imzMLreader:
                 ##############Change in future to take arbitrary masks not just tiff################
                 mask = skimage.io.imread(str(mask), plugin="tifffile")
             # Ensure the mask is a sparse boolean array
-            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool)
+            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
         # Add the mask to the class object -- even if it is none. Will not be applied to image yet
         self.data.mask = mask
@@ -104,7 +104,7 @@ class imzMLreader:
             if mask is not None:
 
                 # Ensure that the mask is boolean
-                mask = np.array(mask.toarray(), dtype=np.bool)
+                mask = np.array(mask.toarray(), dtype=np.bool_)
                 # Get the coordinates where the mask is
                 where = np.where(mask)
                 # Create list of tuples where mask coordinates are (1-indexed) -- form (x,y,z) with z=1 (same as imzML)
@@ -347,7 +347,7 @@ class imzMLreader:
         Create mask indicating coordinates of MSI data acquisition.
         """
         # create temporary image of all 0s to fill
-        im = np.zeros((self.data.array_size[0], self.data.array_size[1]), dtype=np.bool)
+        im = np.zeros((self.data.array_size[0], self.data.array_size[1]), dtype=np.bool_)
         # Run through the data coordinates and fill array
         for i, (x, y, z) in enumerate(self.data.coordinates):
             # Add data to this slice -- only extact this index for each pixel

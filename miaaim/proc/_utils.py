@@ -53,7 +53,7 @@ def CreateHyperspectralImage(embedding, array_size, coordinates, scale=True):
             im[y - 1, x - 1, dim] = embedding.values[i, dim]
 
     # Create a mask to use for excluding pixels not used in dimension reduction
-    im_bool = np.zeros((array_size[0], array_size[1]), dtype=np.bool)
+    im_bool = np.zeros((array_size[0], array_size[1]), dtype=np.bool_)
 
     # Fill the mask array with True values at the coordinates used
     for i, (x, y, z) in enumerate(coordinates):

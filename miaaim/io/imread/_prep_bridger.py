@@ -70,7 +70,7 @@ class PrepBridge:
         # Check to see if the mask exists
         if mask is not None:
             # Ensure the mask is a sparse boolean array
-            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool)
+            mask = scipy.sparse.coo_matrix(mask, dtype=np.bool_)
 
         # Add the mask to the class object -- even if it is none. Will not be applied to image yet
         self.data.mask = mask
