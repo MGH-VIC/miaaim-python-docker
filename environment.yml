@@ -19,3 +19,4 @@ dependencies:
    - dask
    - ipykernel
    - centrosome
+   - muon
