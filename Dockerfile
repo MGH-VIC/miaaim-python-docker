@@ -47,10 +47,6 @@ SHELL ["conda", "run", "-n", "miaaim-dev", "/bin/bash", "-c"]
 RUN python -m pip install .
 
 # install jupyter
-<<<<<<< HEAD
 # RUN conda install jupyter -y
 RUN python -m pip install jupyterlab
-=======
-RUN conda install jupyter -y
->>>>>>> 93dc6871b46291b9a8d5a5948e550a2082fb80bd
 
