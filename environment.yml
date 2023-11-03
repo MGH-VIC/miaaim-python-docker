@@ -4,6 +4,7 @@ channels:
    - bioconda
 dependencies:
    - python=3.10
+<<<<<<< HEAD
    - centrosome
    - ipykernel
    - pip
@@ -25,3 +26,24 @@ dependencies:
        - muon
        - leidenalg
        - squidpy
+=======
+   - numpy
+   - numba
+   - matplotlib
+   - pandas
+   - scipy
+   - scikit-learn
+   - pyimzml
+   - pathlib
+   - uncertainties
+   - pyyaml
+   - tensorflow
+   - umap-learn
+   - dask
+   - ipykernel
+   - centrosome
+   - muon
+   - leidenalg
+   - squidpy
+   - kneed
+>>>>>>> 93dc6871b46291b9a8d5a5948e550a2082fb80bd
