@@ -1,7 +1,7 @@
 # MIAAIM: multi-omics image alignment and analysis by information manifolds
 MIAAIM is a software to align multiple-omics tissue imaging data. The worflow includes high-dimensional image compression, registration, and transforming images to align in the same spatial domain. MIAAIM was developed at the [Vaccine and Immunotherapy Center at MGH](http://advancingcures.org) in the labs of [Dr. Patrick Reeves](http://advancingcures.org/reeves-lab/) and [Dr. Ruxandra Sîrbulescu](http://advancingcures.org/sirbulescu-lab/).
 
-For further documentation on the MIAAIM Python impementation, please visit [joshuahess12.github.io/miaaim-python](https://joshuahess12.github.io/miaaim-python/).
+For further documentation on the MIAAIM Python impementation, please visit [https://mgh-vic.github.io/](https://mgh-vic.github.io/).
 
 ## Installation
 You can install MIAAIM in Python using either the MIAAIM-Python Docker container, which would allow for complete workflow
@@ -13,7 +13,7 @@ MIAAIM utilizes the [Elastix](https://elastix.lumc.nl) library for image registr
 ### Cloning the repository:
 To clone the repository directly, use the following command to ensure that all submodules are included:
 ```bash
-git clone https://github.com/JoshuaHess12/miaaim-python.git --recurse-submodules
+git clone https://github.com/MGH-VIC/miaaim-python-docker.git --recurse-submodules
  ```
 
 ### Usage without Docker / Install with Pip:
